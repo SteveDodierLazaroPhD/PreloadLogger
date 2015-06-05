@@ -7,7 +7,7 @@ lib:
 	gcc -Wall -fPIC -DPIC -shared -o lib.so lib.c logger.c gslist.c -ldl -O0 -g
 
 test:
-	gcc test.c -g -O0 -o preload-logger-test
+	gcc test.c -g -O0 -o preload-logger-test -lrt
 
 clean:
 	unset LD_PRELOAD

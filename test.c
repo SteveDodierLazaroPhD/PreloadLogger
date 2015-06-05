@@ -16,8 +16,11 @@
     along with PreloadLogger.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <dirent.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -135,7 +138,7 @@ int main(void)
 
     fork();
     int sv[2];
-    socketpair(AF_LOCAL, SOCKET_DGRAM, 0, sv);
+    socketpair(AF_LOCAL, SOCK_DGRAM, 0, sv);
     close(sv[0]);
     close(sv[1]);
 
