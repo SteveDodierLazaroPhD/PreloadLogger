@@ -11,7 +11,7 @@ test:
 
 clean:
 	unset LD_PRELOAD
-	rm *~ preload-logger-test lib.so -r
+	rm *~ preload-logger-test lib.so -f
 
 install: lib
 	mkdir $DESTDIR/lib/ -p
