@@ -1,7 +1,7 @@
 all: lib
 
 test-run: test lib
-	LD_PRELOAD=/usr/lib/libPreloadLogger.so ./preload-logger-test
+	LD_PRELOAD=$DESTDIR/lib/libPreloadLogger.so ./preload-logger-test
 
 lib:
 	gcc -Wall -fPIC -DPIC -shared -o lib.so lib.c logger.c gslist.c -ldl -O0 -g
@@ -14,14 +14,15 @@ clean:
 	rm *~ preload-logger-test lib.so -r
 
 install: lib
-	mkdir /usr/lib/ -p
-	cp lib.so /usr/lib/libPreloadLogger.so
-	echo "LD_PRELOAD      DEFAULT=\"/usr/lib/libPreloadLogger.so\"" >> /etc/security/pam_env.conf
+	mkdir $DESTDIR/lib/ -p
+	cp lib.so $DESTDIR/lib/libPreloadLogger.so
+	echo "LD_PRELOAD      DEFAULT=\"$DESTDIR/lib/libPreloadLogger.so\"" >> /etc/security/pam_env.conf
+
 
 uninstall:
 	sed -i '\@PreloadLogger.so@d' /etc/security/pam_env.conf
 	unset LD_PRELOAD
-	rm /usr/lib/libPreloadLogger.so
+	rm $DESTDIR/lib/libPreloadLogger.so
 	
 
 
