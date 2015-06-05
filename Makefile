@@ -19,11 +19,11 @@ install: lib
 	ln -s $(DESTDIR)/usr/lib/libPreloadLogger.so.0.8 $(DESTDIR)/usr/lib/libPreloadLogger.so.0
 	ln -s $(DESTDIR)/usr/lib/libPreloadLogger.so.0 $(DESTDIR)/usr/lib/libPreloadLogger.so
 	mkdir $(DESTDIR)/etc/security/ -p
-	echo "LD_PRELOAD      DEFAULT=\"$(DESTDIR)/usr/lib/libPreloadLogger.so\"" >> $(DESTDIR)/etc/security/pam_env.conf
+#	echo "LD_PRELOAD      DEFAULT=\"$(DESTDIR)/usr/lib/libPreloadLogger.so\"" >> $(DESTDIR)/etc/security/pam_env.conf
 
 
 uninstall:
-	sed -i '\@PreloadLogger.so@d' $(DESTDIR)/etc/security/pam_env.conf
+#	sed -i '\@PreloadLogger.so@d' $(DESTDIR)/etc/security/pam_env.conf
 	unset LD_PRELOAD
 	rm $(DESTDIR)/usr/lib/libPreloadLogger.so -f
 	rm $(DESTDIR)/usr/lib/libPreloadLogger.so.0 -f

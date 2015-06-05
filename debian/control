@@ -1,0 +1,18 @@
+Source: preload-logger
+Priority: optional
+Maintainer: Steve Dodier-Lazaro <sidnioulz@gmail.com>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.5
+Section: libs
+Homepage: https://launchpad.net/activityfinder
+#Vcs-Git: git://anonscm.debian.org/collab-maint/preload-logger.git
+#Vcs-Browser: http://anonscm.debian.org/?p=collab-maint/preload-logger.git;a=summary
+Vcs-Browser: https://code.launchpad.net/~ucl-cs-study-devs/activityfinder/PreloadLogger
+
+Package: preload-logger1
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-modules
+Description: Library to log filesystem and IPC system calls in userland processes
+ Library to log filesystem and IPC system calls in userland processes. Uses
+ PAM env to inject the library into all processes, and creates files into the
+ user's Zeitgeist directory.
