@@ -185,9 +185,10 @@ typedef struct _LZGLog {
   int                write_fd;
 } LZGLog;
 
-#define LZG_TARGET_DIR ".local/share/zeitgeist"
-#define LZG_TARGET_FILE "syscalls.log"
-#define LZG_TARGET_PATH ".local/share/zeitgeist/syscalls.log"
+#define LZG_TARGET_DIR    ".local/share/zeitgeist"
+#define LZG_TARGET_FILE   "syscalls.log"
+#define LZG_LOG_FORBIDDEN "LOGGING-FORBIDDEN.lock"
+#define LZG_TARGET_PATH    ".local/share/zeitgeist/syscalls.log"
 
 char *_zg_get_actor_from_pid (pid_t pid);
 
@@ -208,7 +209,7 @@ void lzg_event_set_interpretation (LZGEvent *e, const char *interpretation);
 //void lzg_event_set_manifestation (LZGEvent *e, const char *manifestation);
 void lzg_event_add_subject (LZGEvent *e, LZGSubject *s);
 
-LZGLog *lzg_log_get_default (void);
+LZGLog *lzg_log_get_default (int reset);
 void lzg_log_insert_event (LZGLog *log, LZGEvent *event);
 
 

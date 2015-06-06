@@ -51,7 +51,7 @@ static void log_event(const char *syscall_text,
   if (!file || !syscall_text || !event_interpretation)
     return;
 
-  LZGLog *log = lzg_log_get_default();
+  LZGLog *log = lzg_log_get_default(0);
   if (!log) return;
 
   LZGEvent *event = lzg_event_new ();
@@ -96,7 +96,7 @@ static void log_old_new_event(const char *oldsubjecttext, const char *oldfile, c
   if (!oldfile || !newfile || !oldsubjecttext || !newsubjecttext || !event_interpretation)
     return;
 
-  LZGLog *log = lzg_log_get_default();
+  LZGLog *log = lzg_log_get_default(0);
   if (!log) return;
 
   LZGEvent *event = lzg_event_new ();
@@ -222,7 +222,7 @@ void _open (const int ret, const char *interpretation, int creates, int dirfd, c
          (geteuid() >= 1000)                                                                     /* Limit the performance hit on service processes */
       && (creates || is_existent (ret))                                                          /* Filter out vain searches in PATH and LD_LIBRARY_PATH */
       && (is_open_for_writing (oflag) || is_home (file) || is_tmp (file) || is_relative (file) ) /* We don't care about /etc, /usr... */
-      && (!is_forbidden_file (file))                                                             /* Our log files in ~/.local/share/zeitgeist are off-limits */
+      && (!is_forbidden_file (file))                                                             /* Our log files in ~/.local/share/... are off-limits */
      )
   {
     char error[1024], *error_str = NULL;
@@ -606,7 +606,9 @@ pid_t fork(void)
   typeof(fork) *original_fork = dlsym(RTLD_NEXT, "fork");
   pid_t ret = (*original_fork)();
 
-  //TODO reopen new log
+  // Reset the log for the child
+  if (!ret)
+    lzg_log_get_default(1);
 
   if (ret)
   {
@@ -920,7 +922,7 @@ void _rm (int ret, const char *pathname, const char *interpretation)
 {
   if (
          (geteuid() >= 1000)               /* Limit the performance hit on service processes */
-      && (!is_forbidden_file (pathname))   /* Our log files in ~/.local/share/zeitgeist are off-limits */
+      && (!is_forbidden_file (pathname))   /* Our log files in ~/.local/share/... are off-limits */
      )
   {
     char error[1024], *error_str = NULL;

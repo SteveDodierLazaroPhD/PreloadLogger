@@ -1,3 +1,9 @@
+preload-logger (0.9-0ubuntu0) vivid; urgency=medium
+
+  * Adding checks for files that forbid logging
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Sat, 06 Jun 2015 16:51:05 +0100
+
 preload-logger (0.8-1ubuntu1) vivid; urgency=medium
 
   * Initial Ubuntu package

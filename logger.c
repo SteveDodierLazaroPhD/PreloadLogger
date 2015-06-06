@@ -35,6 +35,20 @@
 
 char *_zg_get_actor_from_pid (pid_t pid)
 {
+  static char *cached = NULL;
+  static pid_t cached_pid = 0;
+  
+  if (cached_pid && cached_pid != pid) {
+    if (cached) {
+      free (cached);
+      cached = NULL;
+    }
+  }
+
+  if (cached) {
+    return strdup (cached);
+  }
+
   char         *link_file     = NULL;
   char         *link_target   = NULL;
   char         *split_target  = NULL;
@@ -44,7 +58,8 @@ char *_zg_get_actor_from_pid (pid_t pid)
 
   if (pid <= 0)
   {
-      return strdup ("application://unknown.desktop");
+      cached = strdup ("application://unknown.desktop");
+      return strdup (cached);
   }
 
   size_t len = strlen ("/proc//exe") + 100 + 1; //100 is much more than current pid_t's longest digit representation
@@ -52,7 +67,8 @@ char *_zg_get_actor_from_pid (pid_t pid)
   snprintf (link_file, len, "/proc/%d/exe", pid);
   if (link_file == NULL)
   {
-    return strdup ("application://unknown.desktop");
+      cached = strdup ("application://unknown.desktop");
+      return strdup (cached);
   }
 
   // It is impossible to obtain the size of /proc link targets as /proc is
@@ -72,7 +88,8 @@ char *_zg_get_actor_from_pid (pid_t pid)
     {
       free (link_file);
       free (link_target);
-      return strdup ("application://unknown.desktop");
+      cached = strdup ("application://unknown.desktop");
+      return strdup (cached);
     }
 
     read_len= readlink (link_file, link_target, link_len);
@@ -81,7 +98,8 @@ char *_zg_get_actor_from_pid (pid_t pid)
     {
       free (link_file);
       free (link_target);
-      return strdup ("application://unknown.desktop");
+      cached = strdup ("application://unknown.desktop");
+      return strdup (cached);
     }
   }
 
@@ -95,7 +113,8 @@ char *_zg_get_actor_from_pid (pid_t pid)
   if(split_target == NULL)
   {
     free (link_target);
-    return strdup ("application://unknown.desktop");
+      cached = strdup ("application://unknown.desktop");
+      return strdup (cached);
   }
 
   // Turn it into an arbitrary actor name
@@ -108,7 +127,8 @@ char *_zg_get_actor_from_pid (pid_t pid)
   if (!actor_name)
     actor_name = strdup ("application://unknown.desktop");
 
-  return actor_name;
+  cached = actor_name;
+  return strdup(actor_name);
 }
 
 LZGSubject *lzg_subject_new (void)
@@ -310,9 +330,54 @@ void lzg_event_add_subject (LZGEvent *e, LZGSubject *s)
   e->subjects[count+1] = NULL;
 }
 
-LZGLog *lzg_log_get_default (void)
+void lzg_log_free (LZGLog *log)
+{
+  if (log->write_fd >= 0) {
+    typeof(close) *original_close;
+    original_close = dlsym(RTLD_NEXT, "close");
+    (*original_close) (log->write_fd);
+  }
+  
+  free (log);
+}
+
+static void _mkdir (const char *dir)
+{
+  typeof(mkdir) *original_mkdir;
+  original_mkdir = dlsym(RTLD_NEXT, "mkdir");
+  
+  char tmp[PATH_MAX];
+  char *p = NULL;
+  size_t len;
+
+  snprintf(tmp, sizeof(tmp),"%s",dir);
+  len = strlen(tmp);
+
+  if(tmp[len - 1] == '/')
+    tmp[len - 1] = 0;
+
+  for(p = tmp + 1; *p; p++) {
+    if(*p == '/') {
+      *p = 0;
+      (*original_mkdir)(tmp, S_IRWXU);
+      *p = '/';
+    }
+  }
+
+  (*original_mkdir)(tmp, S_IRWXU);
+}
+
+LZGLog *lzg_log_get_default (int reset)
 {
   static LZGLog *log = NULL;
+  
+  if (reset) {
+    lzg_log_free (log);
+    log = NULL;
+  }
+
+  if (geteuid() < 1000)
+    return NULL;
   
   if (!log) {
     log = malloc(sizeof(LZGLog));
@@ -334,33 +399,71 @@ LZGLog *lzg_log_get_default (void)
       snprintf (epath, elen, "%s/%s", env, LZG_TARGET_DIR);
       typeof(opendir) *original_opendir;
       original_opendir = dlsym(RTLD_NEXT, "opendir");
-      DIR *exists = (*original_opendir) (epath);
-      free (epath);
       
-      if (exists) {
-        size_t len = strlen (env) + 1 + strlen (LZG_TARGET_DIR) + 1 + 24 + 5;
-        char *path = malloc (sizeof (char) * len);
-        if (!path) {
-          free(epath);
-          free(log);
-          log = NULL;
-          return NULL;
-        }
-        snprintf (path, len, "%s/%s/%d.log", env, LZG_TARGET_DIR, getpid());
-        
-        typeof(open) *original_open;
-        original_open = dlsym(RTLD_NEXT, "open");
-        log->write_fd = (*original_open) (path, O_WRONLY | O_CREAT | O_APPEND, 00666);
-        free (path);
-      } //TODO else mkdir
+      DIR *exists = (*original_opendir) (epath);
 
-      typeof(closedir) *original_closedir;
-      original_closedir = dlsym(RTLD_NEXT, "closedir");
-      (*original_closedir) (exists);
+      if (!exists) {
+        _mkdir (epath);
+      } else {
+        typeof(closedir) *original_closedir;
+        original_closedir = dlsym(RTLD_NEXT, "closedir");
+        (*original_closedir) (exists);
+      }
+      free (epath);
+
+      size_t len = strlen (env) + 1 + strlen (LZG_TARGET_DIR) + 1 + 24 + 5;
+      char *path = malloc (sizeof (char) * len);
+      if (!path) {
+        free(epath);
+        free(log);
+        log = NULL;
+        return NULL;
+      }
+      snprintf (path, len, "%s/%s/%d.log", env, LZG_TARGET_DIR, getpid());
+      
+      typeof(open) *original_open;
+      original_open = dlsym(RTLD_NEXT, "open");
+      log->write_fd = (*original_open) (path, O_WRONLY | O_CREAT | O_APPEND, 00666);
     }
   }
 
   return log;
+}
+
+int lzg_log_allowed_to_log ()
+{
+  typeof(access) *original_access;
+  original_access = dlsym(RTLD_NEXT, "access");
+  
+  const char *home = getenv("HOME");
+  if(!home)
+    return 0;
+
+  int forbidden = 1;
+  size_t len = strlen(home) + 1 + strlen(LZG_TARGET_DIR) + 1 + strlen(LZG_LOG_FORBIDDEN) + 1;
+  char *full_path = malloc (sizeof (char) * len);
+  if (full_path) {
+    snprintf (full_path, len, "%s/%s/%s", home, LZG_TARGET_DIR, LZG_LOG_FORBIDDEN);
+    forbidden = (*original_access) (full_path, F_OK);
+    free (full_path);
+  }
+
+  if (forbidden)
+    return 0;
+
+  char *actor_name = _zg_get_actor_from_pid (getpid());
+  const char *name = strrchr(actor_name, '/');
+
+  len = strlen(home) + 1 + strlen(LZG_TARGET_DIR) + 1 + strlen(name) + 6;
+  full_path = malloc (sizeof (char) * len);
+  if (full_path) {
+    snprintf (full_path, len, "%s/%s/%s.lock", home, LZG_TARGET_DIR, name);
+    forbidden = (*original_access) (full_path, F_OK);
+    free (full_path);
+    free (actor_name);
+  }
+
+  return !forbidden;
 }
 
 void lzg_log_insert_event (LZGLog *log, LZGEvent *event)
@@ -418,8 +521,7 @@ void lzg_log_insert_event (LZGLog *log, LZGEvent *event)
     ++i;
   }
 
-  //TODO check for the existence of a "WRITING_FORBIDDEN" file that indicates we shouldnt log
-  if(log->write_fd >= 0) {
+  if(log->write_fd >= 0 && lzg_log_allowed_to_log()) {
     write(log->write_fd, msg, strlen(msg));
   }
   
