@@ -439,16 +439,16 @@ int lzg_log_allowed_to_log ()
   if(!home)
     return 0;
 
-  int forbidden = 1;
+  int accessed = -1;
   size_t len = strlen(home) + 1 + strlen(LZG_TARGET_DIR) + 1 + strlen(LZG_LOG_FORBIDDEN) + 1;
   char *full_path = malloc (sizeof (char) * len);
   if (full_path) {
     snprintf (full_path, len, "%s/%s/%s", home, LZG_TARGET_DIR, LZG_LOG_FORBIDDEN);
-    forbidden = (*original_access) (full_path, F_OK);
+    accessed = (*original_access) (full_path, F_OK);
     free (full_path);
   }
 
-  if (forbidden)
+  if (accessed == 0)
     return 0;
 
   char *actor_name = _zg_get_actor_from_pid (getpid());
@@ -458,12 +458,12 @@ int lzg_log_allowed_to_log ()
   full_path = malloc (sizeof (char) * len);
   if (full_path) {
     snprintf (full_path, len, "%s/%s/%s.lock", home, LZG_TARGET_DIR, name);
-    forbidden = (*original_access) (full_path, F_OK);
+    accessed = (*original_access) (full_path, F_OK);
     free (full_path);
     free (actor_name);
   }
 
-  return !forbidden;
+  return accessed;
 }
 
 void lzg_log_insert_event (LZGLog *log, LZGEvent *event)
