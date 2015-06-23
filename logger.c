@@ -58,7 +58,7 @@ char *_zg_get_actor_from_pid (pid_t pid)
 
   if (pid <= 0)
   {
-      cached = strdup ("application://unknown.desktop");
+      cached = strdup ("unknown");
       return strdup (cached);
   }
 
@@ -67,7 +67,7 @@ char *_zg_get_actor_from_pid (pid_t pid)
   snprintf (link_file, len, "/proc/%d/exe", pid);
   if (link_file == NULL)
   {
-      cached = strdup ("application://unknown.desktop");
+      cached = strdup ("unknown");
       return strdup (cached);
   }
 
@@ -88,7 +88,7 @@ char *_zg_get_actor_from_pid (pid_t pid)
     {
       free (link_file);
       free (link_target);
-      cached = strdup ("application://unknown.desktop");
+      cached = strdup ("unknown");
       return strdup (cached);
     }
 
@@ -98,7 +98,7 @@ char *_zg_get_actor_from_pid (pid_t pid)
     {
       free (link_file);
       free (link_target);
-      cached = strdup ("application://unknown.desktop");
+      cached = strdup ("unknown");
       return strdup (cached);
     }
   }
@@ -113,19 +113,19 @@ char *_zg_get_actor_from_pid (pid_t pid)
   if(split_target == NULL)
   {
     free (link_target);
-      cached = strdup ("application://unknown.desktop");
+      cached = strdup ("unknown");
       return strdup (cached);
   }
 
   // Turn it into an arbitrary actor name
-  size_t actor_len = strlen("application://.desktop") + strlen (split_target) + 1;
+  size_t actor_len = strlen (split_target) + 1;
   actor_name = malloc (sizeof (char) * actor_len);
-  snprintf (actor_name, actor_len, "application://%s.desktop", split_target+1);
+  snprintf (actor_name, actor_len, "%s", split_target+1);
   free (link_target);
 
   // Better safe than sorry
   if (!actor_name)
-    actor_name = strdup ("application://unknown.desktop");
+    actor_name = strdup ("unknown");
 
   cached = actor_name;
   return strdup(actor_name);
@@ -140,10 +140,7 @@ LZGSubject *lzg_subject_new (void)
 
   s->uri = NULL;
   s->origin = NULL;
-  s->mime = NULL;
   s->text = NULL;
-//  s->interpretation = NULL;
-//  s->manifestation = NULL;
 
   return s;
 }
@@ -157,12 +154,6 @@ void lzg_subject_free (LZGSubject *s)
     free(s->uri);
   if(s->origin)
     free(s->origin);
-  if(s->mime)
-    free(s->mime);
-//  if(s->interpretation)
-//    free(s->interpretation);
-//  if(s->manifestation)
-//    free(s->manifestation);
 
   free(s);
 }
@@ -189,18 +180,6 @@ void lzg_subject_set_origin (LZGSubject *s, const char *origin)
   s->origin = strndup (origin, 8192);
 }
 
-void lzg_subject_set_mime_type (LZGSubject *s, const char *mime)
-{
-  if(!s)
-    return;
-
-  if(s->mime)
-    free(s->mime);
-  
-  s->mime = strndup (mime, 8192);
-}
-
-
 void lzg_subject_set_text (LZGSubject *s, const char *text)
 {
   if(!s)
@@ -212,29 +191,6 @@ void lzg_subject_set_text (LZGSubject *s, const char *text)
   s->text = strndup (text, 8192);
 }
 
-/*void lzg_subject_set_interpretation (LZGSubject *s, const char *interpretation)
-{
-  if(!s)
-    return;
-
-  if(s->interpretation)
-    free(s->interpretation);
-  
-  s->interpretation = strndup (interpretation, 8192);
-}*/
-
-/*void lzg_subject_set_manifestation (LZGSubject *s, const char *manifestation)
-{
-  if(!s)
-    return;
-
-  if(s->manifestation)
-    free(s->manifestation);
-  
-  s->manifestation = strndup (manifestation, 8192);
-}*/
-
-
 LZGEvent *lzg_event_new (void)
 {
   LZGEvent *e = malloc(sizeof(LZGEvent));
@@ -242,12 +198,9 @@ LZGEvent *lzg_event_new (void)
   if(!e)
     return NULL;
 
-  e->actor = NULL;
   e->timestamp = time(NULL);
-  e->pid = 0;
-  e->interpretation = NULL;
-//  e->manifestation = NULL;
   e->subjects = NULL;
+  e->interpretation = NULL;
 
   return e;
 }
@@ -266,28 +219,7 @@ void lzg_event_free (LZGEvent *e)
     free(e->subjects);
   }
 
-  if(e->actor)
-    free(e->actor);
-
   free(e);
-}
-
-void lzg_event_set_actor (LZGEvent *e, const char *actor)
-{
-  if(!e)
-    return;
-
-  if(e->actor)
-    free(e->actor);
-  
-  e->actor = strndup (actor, 8192);
-}
-void lzg_event_set_pid (LZGEvent *e, pid_t pid)
-{
-  if(!e)
-    return;
-  
-  e->pid = pid;
 }
 
 void lzg_event_set_interpretation (LZGEvent *e, const char *interpretation)
@@ -295,9 +227,6 @@ void lzg_event_set_interpretation (LZGEvent *e, const char *interpretation)
   if(!e)
     return;
 
-  if(e->interpretation)
-    free(e->interpretation);
-  
   e->interpretation = strndup (interpretation, 8192);
 }
 
@@ -367,6 +296,68 @@ static void _mkdir (const char *dir)
   (*original_mkdir)(tmp, S_IRWXU);
 }
 
+int lzg_log_allowed_to_log ()
+{
+  typeof(access) *original_access;
+  original_access = dlsym(RTLD_NEXT, "access");
+  
+  const char *home = getenv("HOME");
+  if(!home)
+    return 0;
+
+  int accessed = -1;
+  size_t len = strlen(home) + 1 + strlen(LZG_TARGET_DIR) + 1 + strlen(LZG_LOG_FORBIDDEN) + 1;
+  char *full_path = malloc (sizeof (char) * len);
+  if (full_path) {
+    snprintf (full_path, len, "%s/%s/%s", home, LZG_TARGET_DIR, LZG_LOG_FORBIDDEN);
+    accessed = (*original_access) (full_path, F_OK);
+    free (full_path);
+  }
+
+  if (accessed == 0)
+    return 0;
+
+  char *name = _zg_get_actor_from_pid (getpid());
+  if (!name)
+    return 0;
+
+  len = strlen(home) + 1 + strlen(LZG_TARGET_DIR) + 1 + strlen(name) + 6;
+  full_path = malloc (sizeof (char) * len);
+  if (full_path) {
+    snprintf (full_path, len, "%s/%s/%s.lock", home, LZG_TARGET_DIR, name);
+    accessed = (*original_access) (full_path, F_OK);
+    free (full_path);
+    free (name);
+  }
+
+  return accessed;
+}
+
+void lzg_log_log_process_data (LZGLog *log)
+{
+  if(log->write_fd >= 0 && lzg_log_allowed_to_log()) {
+    pid_t pid = getpid();
+    char *actor = _zg_get_actor_from_pid (pid);
+    if (!actor)
+      return;
+
+    char *msg = NULL;
+    size_t msg_len = 0;
+    
+    msg_len = strlen(actor) + 12 /* pid */ + 4 /* @ : \n \0 */;
+    msg = malloc(sizeof (char) * msg_len);
+    if (!msg) {
+      free (actor);
+      return;
+    }
+
+    snprintf(msg, msg_len, "@%s|%d\n", actor, pid);
+    write(log->write_fd, msg, strlen(msg));
+    free(actor);
+    free(msg);
+  }
+}
+
 LZGLog *lzg_log_get_default (int reset)
 {
   static LZGLog *log = NULL;
@@ -419,51 +410,23 @@ LZGLog *lzg_log_get_default (int reset)
         log = NULL;
         return NULL;
       }
-      snprintf (path, len, "%s/%s/%d.log", env, LZG_TARGET_DIR, getpid());
+      
+      time_t t = time(NULL);
+      struct tm ttm;
+      localtime_r(&t, &ttm);
+      char date[100] = {0};
+
+      strftime(date, sizeof(date), "%Y-%m-%d_%H%M%S", &ttm);
+      snprintf (path, len, "%s/%s/%s_%d.log", env, LZG_TARGET_DIR, date, getpid());
       
       typeof(open) *original_open;
       original_open = dlsym(RTLD_NEXT, "open");
       log->write_fd = (*original_open) (path, O_WRONLY | O_CREAT | O_APPEND, 00666);
+      lzg_log_log_process_data(log);
     }
   }
 
   return log;
-}
-
-int lzg_log_allowed_to_log ()
-{
-  typeof(access) *original_access;
-  original_access = dlsym(RTLD_NEXT, "access");
-  
-  const char *home = getenv("HOME");
-  if(!home)
-    return 0;
-
-  int accessed = -1;
-  size_t len = strlen(home) + 1 + strlen(LZG_TARGET_DIR) + 1 + strlen(LZG_LOG_FORBIDDEN) + 1;
-  char *full_path = malloc (sizeof (char) * len);
-  if (full_path) {
-    snprintf (full_path, len, "%s/%s/%s", home, LZG_TARGET_DIR, LZG_LOG_FORBIDDEN);
-    accessed = (*original_access) (full_path, F_OK);
-    free (full_path);
-  }
-
-  if (accessed == 0)
-    return 0;
-
-  char *actor_name = _zg_get_actor_from_pid (getpid());
-  const char *name = strrchr(actor_name, '/');
-
-  len = strlen(home) + 1 + strlen(LZG_TARGET_DIR) + 1 + strlen(name) + 6;
-  full_path = malloc (sizeof (char) * len);
-  if (full_path) {
-    snprintf (full_path, len, "%s/%s/%s.lock", home, LZG_TARGET_DIR, name);
-    accessed = (*original_access) (full_path, F_OK);
-    free (full_path);
-    free (actor_name);
-  }
-
-  return accessed;
 }
 
 void lzg_log_insert_event (LZGLog *log, LZGEvent *event)
@@ -471,52 +434,35 @@ void lzg_log_insert_event (LZGLog *log, LZGEvent *event)
   if(!log || !event)
     return;
 
-  if (!event->actor) {
-    //fprintf (stderr, "UCL study: trying to log event without actor, ignoring.\n");
-    return;
-  }
-
-  if (!event->pid) {
-    //fprintf (stderr, "UCL study: trying to log event without process ID, ignoring.\n");
-    return;
-  }
-
   if (!event->interpretation) {
     //fprintf (stderr, "UCL study: trying to log event without interpretation, ignoring.\n");
     return;
   }
 
-/*  if (!event->manifestation) {
-    fprintf (stderr, "UCL study: trying to log event without manifestation, ignoring.\n");
-    return;
-  }*/
-
 
   char *msg = NULL;
   size_t msg_len = 0;
   
-  msg_len = strlen(event->actor) + strlen(event->interpretation) + /*strlen(event->manifestation) +*/ 24 /* actually time_t is a long int so 12 would suffice */ + 24 /*timestamp*/ + 200 /* format string */;
+  msg_len = strlen(event->interpretation) + /* actually time_t is a long int so 12 would suffice */ + 24 /*timestamp*/ + 200 /* format string */;
   msg = malloc(sizeof (char) * msg_len);
-  snprintf(msg, msg_len, "%s:%d:%li:%s:%s",
-                         event->actor,
-                         event->pid,
+  snprintf(msg, msg_len, "%li|%s%s",
                          event->timestamp,
                          event->interpretation,
-                         (event->subjects && !event->subjects[1] ? " ":"\n"));//, event->manifestation);
+                         (event->subjects && !event->subjects[1] ? "|":"\n"));//, event->manifestation);
 
   int i=0;
   while (event->subjects && event->subjects[i]) {
     LZGSubject *s = event->subjects[i];
 
     char *old = strdup(msg);
-    size_t slen = strlen(s->uri) + (s->origin ? strlen(s->origin):0) + (s->mime ? strlen(s->mime):0) + (s->text ? strlen(s->text):0) + 200;
+    size_t slen = strlen(s->uri) + (s->origin ? strlen(s->origin):0) + (s->text ? strlen(s->text):0) + 200;
     msg = realloc (msg, strlen(old) + slen);
-    snprintf(msg, strlen(old) + slen, "%s--- %s: %s (origin: %s; type: %s)\n",
+    snprintf(msg, strlen(old) + slen, "%s%s%s|%s|%s\n",
                                       old,
+                                       (event->subjects && !event->subjects[1] ? "":" "),
                                       s->uri,
                                       s->text,
-                                      s->origin,
-                                      s->mime);
+                                      s->origin? s->origin:"");
     free (old);
     ++i;
   }

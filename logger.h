@@ -21,8 +21,6 @@
 
 #include <stdio.h>
 
-
-
 /*
  * Copyright (C) 2010 Canonical, Ltd. UNTIL INDICATED OTHERWISE BELOW
  *
@@ -166,18 +164,12 @@
 typedef struct _LZGSubject {
   char              *uri;
   char              *origin;
-  char              *mime;
   char              *text;
-  char              *interpretation;
-//  char              *manifestation;
 } LZGSubject;
 
 typedef struct _LZGEvent {
   time_t             timestamp;
-  pid_t              pid;
-  char              *actor;
   char              *interpretation;
-//  char              *manifestation;
   LZGSubject **subjects;
 } LZGEvent;
 
@@ -196,17 +188,11 @@ LZGSubject *lzg_subject_new (void);
 void lzg_subject_free (LZGSubject *s);
 void lzg_subject_set_uri (LZGSubject *s, const char *uri);
 void lzg_subject_set_origin (LZGSubject *s, const char *origin);
-void lzg_subject_set_mime_type (LZGSubject *s, const char *mime_type);
 void lzg_subject_set_text (LZGSubject *s, const char *text);
-void lzg_subject_set_interpretation (LZGSubject *s, const char *interpretation);
-//void lzg_subject_set_manifestation (LZGSubject *s, const char *manifestation);
 
 LZGEvent *lzg_event_new (void);
 void lzg_event_free (LZGEvent *e);
-void lzg_event_set_actor (LZGEvent *e, const char *actor);
-void lzg_event_set_pid (LZGEvent *e, pid_t pid);
 void lzg_event_set_interpretation (LZGEvent *e, const char *interpretation);
-//void lzg_event_set_manifestation (LZGEvent *e, const char *manifestation);
 void lzg_event_add_subject (LZGEvent *e, LZGSubject *s);
 
 LZGLog *lzg_log_get_default (int reset);

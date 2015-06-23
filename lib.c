@@ -58,10 +58,6 @@ static void log_event(const char *syscall_text,
   if (!event) return;
   
   lzg_event_set_interpretation (event, event_interpretation);
-  char *actor = _zg_get_actor_from_pid (getpid ());
-  lzg_event_set_actor (event, actor);
-  lzg_event_set_pid (event, getpid());
-  free (actor);
   
   LZGSubject *subject = lzg_subject_new ();
   if (!subject) {
@@ -103,10 +99,6 @@ static void log_old_new_event(const char *oldsubjecttext, const char *oldfile, c
   if (!event) return;
 
   lzg_event_set_interpretation (event, event_interpretation);
-  char *actor = _zg_get_actor_from_pid (getpid ());
-  lzg_event_set_actor (event, actor);
-  lzg_event_set_pid (event, getpid());
-  free (actor);
   
   LZGSubject *subject = lzg_subject_new ();
   if (!subject) {
@@ -225,15 +217,17 @@ void _open (const int ret, const char *interpretation, int creates, int dirfd, c
       && (!is_forbidden_file (file))                                                             /* Our log files in ~/.local/share/... are off-limits */
      )
   {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t len = 24 /* oflag and ret */ + 200 /* snprintf format string + some extra for safety */ + 1024 /* error_str string */;
     char *open_txt = malloc (sizeof (char) * len);
     if (open_txt) {
-      snprintf (open_txt, len, "fd %d: with flag %d, returned %s", ret, oflag, (ret<0? error_str:"no error"));
+      snprintf (open_txt, len, "fd %d: with flag %d, %s", ret, oflag, (ret<0? error_str:"e0"));
       log_event(open_txt, file, dirfd, interpretation);
       free (open_txt);
     }
@@ -309,16 +303,18 @@ int creat (const char *pathname, mode_t mode)
 void _dup (const int ret, const char *interpretation, int oldfd, int newfd, mode_t mode)
 {
   if(lzg_slist_find(fds, INT_TO_POINTER(oldfd))) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t plen = 40, dup_len = 200+1024;
     char *oldpath = malloc (sizeof(char)*plen), *newpath = malloc (sizeof(char)*plen), *dup_txt = malloc (sizeof(char)*dup_len);
     snprintf (oldpath, plen, "fd: %d", oldfd);
     snprintf (newpath, plen, "fd: %d", newfd);
-    snprintf (dup_txt, dup_len, "New fd: returned %s", (ret? error_str:"no error"));
+    snprintf (dup_txt, dup_len, "New fd: %s", (ret? error_str:"e0"));
     log_old_new_event ("Old fd", oldpath, -1, dup_txt, newpath, -1, interpretation);
     free (oldpath);
     free (newpath);
@@ -365,14 +361,16 @@ void _link (const int ret, const char *interpretation,
           is_home (newpath) || is_tmp (newpath) || is_relative (newpath))  /* We don't care about /etc, /usr... */
      )
   {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t new_len = 200+1024;
     char *new_txt = malloc (sizeof(char)*new_len);
-    snprintf (new_txt, new_len, "with flag %d, returned %s", flags, (ret<0? error_str:"no error"));
+    snprintf (new_txt, new_len, "with flag %d, %s", flags, (ret<0? error_str:"e0"));
     log_old_new_event ("", oldpath, olddirfd, new_txt, newpath, newdirfd, interpretation);
     free (new_txt);
   }
@@ -446,15 +444,17 @@ static void _fopen(FILE *ret, const char *path, const char *mode, const char *in
                         && !is_forbidden_file (path) )
         )
     ) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t len = 12 /* flag */ + 200 /* snprintf format string + some extra for safety */ + 1024 /* error_str string */;
     char *open_txt = malloc (sizeof (char) * len);
     if (open_txt) {
-      snprintf (open_txt, len, "FILE %p: with flag %d, returned %s", ret, flag, (ret? "no error":error_str));
+      snprintf (open_txt, len, "FILE %p: with flag %d, %s", ret, flag, (ret? "e0":error_str));
       files = lzg_slist_prepend(files, ret);
       log_event(open_txt, path, -1, interpretation);
       free (open_txt);
@@ -484,9 +484,11 @@ FILE *fdopen(int fd, const char *mode)
   FILE *ret = (*original_open)(fd, mode);
 
   if(lzg_slist_find(fds, INT_TO_POINTER(fd))) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     int flag = _translate_fopen_mode(mode);
@@ -499,7 +501,7 @@ FILE *fdopen(int fd, const char *mode)
     if (open_txt && file && old_fd) {
       snprintf (old_fd, plen, "fd: %d", fd);
       snprintf (file, plen, "FILE %p", ret);
-      snprintf (open_txt, len, "with flag %d, returned %s", flag, (ret? "no error":error_str));
+      snprintf (open_txt, len, "with flag %d, %s", flag, (ret? "e0":error_str));
       files = lzg_slist_prepend(files, ret);
       log_old_new_event ("", old_fd, -1, open_txt, file, -1, FDOPEN_SCI);
       free (open_txt);
@@ -570,9 +572,11 @@ int socketpair(int domain, int type, int protocol, int sv[2])
   int ret = (*original_socket)(domain, type, protocol, sv);
 
   if ((geteuid() >= 1000) && (domain == AF_UNIX || domain == AF_LOCAL) && (errno!=EFAULT)) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
     
     size_t len = 50;
@@ -581,7 +585,7 @@ int socketpair(int domain, int type, int protocol, int sv[2])
     char *open_txt = malloc (sizeof (char) * txtlen);
     if (p0_txt && open_txt) {
       snprintf (p0_txt, len, "socket %d", sv[0]);
-      snprintf (open_txt, txtlen, "socket %d: with domain %d, type %d, protocol %d, returned %s", sv[1], domain, type, protocol, (ret<0? error_str:"no error"));
+      snprintf (open_txt, txtlen, "socket %d: with domain %d, type %d, protocol %d, %s", sv[1], domain, type, protocol, (ret<0? error_str:"e0"));
       log_old_new_event("", p0_txt, -1, "", open_txt, -1, SOCKETPAIR_SCI);
       free (p0_txt);
       free (open_txt);
@@ -612,9 +616,11 @@ pid_t fork(void)
 
   if (ret)
   {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
     
     size_t len = 24;
@@ -623,7 +629,7 @@ pid_t fork(void)
     char *err_txt = malloc (sizeof (char) * txtlen);
     if (pid_txt && err_txt) {
       snprintf (pid_txt, len, "pid %d", ret);
-      snprintf (err_txt, txtlen, "returned %s", (ret<0? error_str:"no error"));
+      snprintf (err_txt, txtlen, "%s", (ret<0? error_str:"e0"));
       log_event(err_txt, pid_txt, -1, FORK_SCI);
       free (pid_txt);
       free (err_txt);
@@ -639,15 +645,17 @@ DIR *opendir(const char *name)
   DIR *ret = (*original_open)(name);
 
   if((geteuid() >= 1000) && (is_home (name) || is_tmp (name) || is_relative (name))) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t len = 12 /* flag */ + 200 /* snprintf format string + some extra for safety */ + 1024 /* error_str string */;
     char *open_txt = malloc (sizeof (char) * len);
     if (open_txt) {
-      snprintf (open_txt, len, "DIR %p: returned %s", ret, (ret? "no error":error_str));
+      snprintf (open_txt, len, "DIR %p: %s", ret, (ret? "e0":error_str));
       dirs = lzg_slist_prepend(dirs, ret);
       log_event(open_txt, name, -1, OPENDIR_SCI);
       free (open_txt);
@@ -663,9 +671,11 @@ DIR *fdopendir(int fd)
   DIR *ret = (*original_open)(fd);
 
   if(lzg_slist_find(fds, INT_TO_POINTER(fd))) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t len = 200 /* snprintf format string + some extra for safety */ + 1024 /* error_str string */;
@@ -676,7 +686,7 @@ DIR *fdopendir(int fd)
     if (open_txt && file && old_fd) {
       snprintf (old_fd, plen, "fd: %d", fd);
       snprintf (file, plen, "DIR %p", ret);
-      snprintf (open_txt, len, "returned %s", (ret? "no error":error_str));
+      snprintf (open_txt, len, "%s", (ret? "e0":error_str));
       dirs = lzg_slist_prepend(dirs, ret);
       log_old_new_event ("", old_fd, -1, open_txt, file, -1, FDOPENDIR_SCI);
       free (open_txt);
@@ -695,15 +705,17 @@ int shm_open(const char *name, int oflag, mode_t mode)
 
   if (geteuid() >= 1000)
   {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t len = 300 + 1024 /* error_str string */;
     char *open_txt = malloc (sizeof (char) * len);
     if (open_txt) {
-      snprintf (open_txt, len, "shm %d: with flag %d and mode %d returned %s", ret, oflag, mode, (ret<0? error_str:"no error"));
+      snprintf (open_txt, len, "shm %d: with flag %d and mode %d: %s", ret, oflag, mode, (ret<0? error_str:"e0"));
       log_event(open_txt, name, -1, SHM_OPEN_SCI);
       free (open_txt);
     }
@@ -719,15 +731,17 @@ int shm_unlink(const char *name)
 
   if (geteuid() >= 1000)
   {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t len = 300 + 1024 /* error_str string */;
     char *open_txt = malloc (sizeof (char) * len);
     if (open_txt) {
-      snprintf (open_txt, len, "shm: returned %s", (ret<0? error_str:"no error"));
+      snprintf (open_txt, len, "shm: %s", (ret<0? error_str:"e0"));
       log_event(open_txt, name, -1, SHM_UNLINK_SCI);
       free (open_txt);
     }
@@ -758,14 +772,16 @@ void _rename(int ret, const char *oldpath, const int olddirfd, const char *newpa
 {
   if(( is_home (oldpath) || is_tmp (oldpath) || is_relative (oldpath) ||  is_home (newpath) || is_tmp (newpath) || is_relative (newpath) ) /* We don't care about /etc, /usr... */
       && !(is_forbidden_file (oldpath) || is_forbidden_file (newpath)) ) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t newlen = 100 + 1024;
     char *newtxt = malloc (sizeof(char)*newlen);
-    snprintf (newtxt, newlen, "New file: with flags %d, returned %s", flags, (ret? error_str:"no error"));
+    snprintf (newtxt, newlen, "New file: with flags %d, %s", flags, (ret? error_str:"e0"));
     log_old_new_event ("Old file", oldpath, olddirfd, newtxt, newpath, newdirfd, interpretation);
     free (newtxt);
   }
@@ -808,16 +824,18 @@ int close (int fd)
   int ret = (*original_close)(fd);
   
   if(lzg_slist_find(fds, INT_TO_POINTER(fd))) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
     
     char *path = malloc(sizeof(char) * 200);
     snprintf(path, 200, "fd: %d", fd);
     size_t close_len = 200 + 1024;
     char *close_txt = malloc (sizeof(char) * close_len);
-    snprintf (close_txt, close_len, "returned %s", (ret? error_str:"no error"));
+    snprintf (close_txt, close_len, "%s", (ret? error_str:"e0"));
     log_event (close_txt, path, -1, CLOSE_SCI);
     free (close_txt);
     free (path);
@@ -831,16 +849,18 @@ int close (int fd)
 void _fclose (int ret, FILE *fp, const char *interpretation)
 {
   if(lzg_slist_find(files, fp)) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
     
     char *path = malloc(sizeof(char) * 200);
     snprintf(path, 200, "FILE: %p", fp);
     size_t close_len = 200 + 1024;
     char *close_txt = malloc (sizeof(char) * close_len);
-    snprintf (close_txt, close_len, "returned %s", (ret? error_str:"no error"));
+    snprintf (close_txt, close_len, "%s", (ret? error_str:"e0"));
     log_event (close_txt, path, -1, interpretation);
     free (close_txt);
     free (path);
@@ -870,16 +890,18 @@ int closedir(DIR *dirp)
   typeof(closedir) *original_closedir = dlsym(RTLD_NEXT, "closedir");
   int ret = (*original_closedir)(dirp);
   if(lzg_slist_find(dirs, dirp)) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     char *path = malloc(sizeof(char) * 200);
     snprintf(path, 200, "DIR: %p", dirp);
     size_t close_len = 200 + 1024;
     char *close_txt = malloc (sizeof(char) * close_len);
-    snprintf (close_txt, close_len, "returned %s", (ret? error_str:"no error"));
+    snprintf (close_txt, close_len, "%s", (ret? error_str:"e0"));
     log_event (close_txt, path, -1, CLOSEDIR_SCI);
     free (close_txt);
     free (path);
@@ -897,15 +919,17 @@ int socket(int domain, int type, int protocol)
   int ret = (*original_socket)(domain, type, protocol);
 
   if ((geteuid() >= 1000) && (domain == AF_UNIX || domain == AF_LOCAL)) {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t len = 600 + 1024 /* error_str string */;
     char *open_txt = malloc (sizeof (char) * len);
     if (open_txt) {
-      snprintf (open_txt, len, "socket %d: with domain %d, type %d, protocol %d, returned %s", ret, domain, type, protocol, (ret<0? error_str:"no error"));
+      snprintf (open_txt, len, "socket %d: with domain %d, type %d, protocol %d, %s", ret, domain, type, protocol, (ret<0? error_str:"e0"));
       log_event(open_txt, "socket", -1, SOCKET_SCI);
       free (open_txt);
     }
@@ -925,15 +949,17 @@ void _rm (int ret, const char *pathname, const char *interpretation)
       && (!is_forbidden_file (pathname))   /* Our log files in ~/.local/share/... are off-limits */
      )
   {
-    char error[1024], *error_str = NULL;
+    char *error_str = NULL;//, error[1024];
     if (errno) {
-      error_str = strerror_r (errno, error, 1024);
+      //error_str = strerror_r (errno, error, 1024);
+      error_str = malloc (26);
+      snprintf (error_str, 26, "e%d", errno);
     }
 
     size_t len = 200 /* snprintf format string + some extra for safety */ + 1024 /* error_str string */;
     char *rm_txt = malloc (sizeof (char) * len);
     if (rm_txt) {
-      snprintf (rm_txt, len, "returned %s", (ret<0? error_str:"no error"));
+      snprintf (rm_txt, len, "%s", (ret<0? error_str:"e0"));
       log_event(rm_txt, pathname, -1, interpretation);
       free (rm_txt);
     }
