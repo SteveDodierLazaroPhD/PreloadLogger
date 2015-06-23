@@ -16,8 +16,8 @@ clean:
 install: lib
 	mkdir $(DESTDIR)/usr/lib/ -p
 	cp lib.so $(DESTDIR)/usr/lib/libPreloadLogger.so.0.9
-	ln -s $(DESTDIR)/usr/lib/libPreloadLogger.so.0.9 $(DESTDIR)/usr/lib/libPreloadLogger.so.0
-	ln -s $(DESTDIR)/usr/lib/libPreloadLogger.so.0 $(DESTDIR)/usr/lib/libPreloadLogger.so
+	ln -fs $(DESTDIR)/usr/lib/libPreloadLogger.so.0.9 $(DESTDIR)/usr/lib/libPreloadLogger.so.0
+	ln -fs $(DESTDIR)/usr/lib/libPreloadLogger.so.0 $(DESTDIR)/usr/lib/libPreloadLogger.so
 	mkdir $(DESTDIR)/etc/security/ -p
 #	echo "LD_PRELOAD      DEFAULT=\"$(DESTDIR)/usr/lib/libPreloadLogger.so\"" >> $(DESTDIR)/etc/security/pam_env.conf
 
