@@ -28,6 +28,7 @@
 
 int main(void)
 {
+    printf ("PreloadLogger system call tests - pid %d\n\n", getpid());
     
     int fd = open("/home/study/Preload/lib.c", O_RDONLY);
     if (fd < 0) {
