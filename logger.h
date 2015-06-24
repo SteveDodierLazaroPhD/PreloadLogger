@@ -20,6 +20,13 @@
 #define	_LOGGER_H	1
 
 #include <stdio.h>
+#include "zlib/zlib.h"
+
+typedef enum {
+  LZG_LOG_DONT_RESET = 0,
+  LZG_LOG_RESET_SHUTDOWN = 1,
+  LZG_LOG_RESET_FORK = 2
+} LZGLogResetFlag;
 
 /*
  * Copyright (C) 2010 Canonical, Ltd. UNTIL INDICATED OTHERWISE BELOW
@@ -174,7 +181,8 @@ typedef struct _LZGEvent {
 } LZGEvent;
 
 typedef struct _LZGLog {
-  int                write_fd;
+//  int                write_fd;
+  gzFile             write_zfd;
 } LZGLog;
 
 #define LZG_TARGET_DIR    ".local/share/zeitgeist"
@@ -195,7 +203,7 @@ void lzg_event_free (LZGEvent *e);
 void lzg_event_set_interpretation (LZGEvent *e, const char *interpretation);
 void lzg_event_add_subject (LZGEvent *e, LZGSubject *s);
 
-LZGLog *lzg_log_get_default (int reset);
+LZGLog *lzg_log_get_default (LZGLogResetFlag reset);
 void lzg_log_insert_event (LZGLog *log, LZGEvent *event);
 
 
@@ -238,6 +246,5 @@ void lzg_log_insert_event (LZGLog *log, LZGEvent *event);
 #define RENAMEAT2_SCI        "renameat2"
 #define SHM_OPEN_SCI         "shm_open"
 #define SHM_UNLINK_SCI       "shm_unlink"
-
 
 #endif /* LOGGER.h  */

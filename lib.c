@@ -51,7 +51,7 @@ static void log_event(const char *syscall_text,
   if (!file || !syscall_text || !event_interpretation)
     return;
 
-  LZGLog *log = lzg_log_get_default(0);
+  LZGLog *log = lzg_log_get_default(LZG_LOG_DONT_RESET);
   if (!log) return;
 
   LZGEvent *event = lzg_event_new ();
@@ -611,10 +611,11 @@ pid_t fork(void)
   pid_t ret = (*original_fork)();
 
   // Reset the log for the child
-  if (!ret)
-    lzg_log_get_default(1);
-
-  if (ret)
+  if (ret == 0)
+  {
+    lzg_log_get_default(LZG_LOG_RESET_FORK);
+  }
+  else 
   {
     char *error_str = NULL;//, error[1024];
     if (errno) {

@@ -32,6 +32,7 @@
 #include <time.h>
 #include "logger.h"
 
+static int _lzg_exit_registered = 0;
 
 char *_zg_get_actor_from_pid (pid_t pid)
 {
@@ -259,15 +260,23 @@ void lzg_event_add_subject (LZGEvent *e, LZGSubject *s)
   e->subjects[count+1] = NULL;
 }
 
-void lzg_log_free (LZGLog *log)
+void lzg_log_free (LZGLog *log, LZGLogResetFlag reset)
 {
-  if (log->write_fd >= 0) {
-    typeof(close) *original_close;
+  if(!log)
+    return;
+
+  if (log->write_zfd != NULL) {
+    /*typeof(close) *original_close;
     original_close = dlsym(RTLD_NEXT, "close");
-    (*original_close) (log->write_fd);
+    (*original_close) (log->write_fd);*/
+    if (reset == LZG_LOG_RESET_FORK)
+      gzclose_no_flush (log->write_zfd);
+    else
+      gzclose_w (log->write_zfd);
   }
   
   free (log);
+  log = NULL;
 }
 
 static void _mkdir (const char *dir)
@@ -335,7 +344,7 @@ int lzg_log_allowed_to_log ()
 
 void lzg_log_log_process_data (LZGLog *log)
 {
-  if(log->write_fd >= 0 && lzg_log_allowed_to_log()) {
+  if(log->write_zfd != NULL && lzg_log_allowed_to_log()) {
     pid_t pid = getpid();
     char *actor = _zg_get_actor_from_pid (pid);
     if (!actor)
@@ -352,19 +361,28 @@ void lzg_log_log_process_data (LZGLog *log)
     }
 
     snprintf(msg, msg_len, "@%s|%d\n", actor, pid);
-    write(log->write_fd, msg, strlen(msg));
+    //write(log->write_fd, msg, strlen(msg));
+    gzwrite(log->write_zfd, msg, strlen(msg));
     free(actor);
     free(msg);
   }
 }
 
-LZGLog *lzg_log_get_default (int reset)
+static void lzg_log_shutdown()
+{
+  lzg_log_get_default(LZG_LOG_RESET_SHUTDOWN);
+}
+
+LZGLog *lzg_log_get_default (LZGLogResetFlag reset)
 {
   static LZGLog *log = NULL;
   
-  if (reset) {
-    lzg_log_free (log);
+  if (reset != LZG_LOG_DONT_RESET) {
+    lzg_log_free (log, reset);
     log = NULL;
+
+    if (reset == LZG_LOG_RESET_SHUTDOWN)
+      return NULL;
   }
 
   if (geteuid() < 1000)
@@ -374,9 +392,10 @@ LZGLog *lzg_log_get_default (int reset)
     log = malloc(sizeof(LZGLog));
     if(!log)
         return NULL;
-    log->write_fd = -1;
+    //log->write_fd = -1;
+    log->write_zfd = NULL;
 
-    /* Try to init write_fd */
+    /* Try to init write_fd / write_zfd */
     const char *env = getenv("HOME");
     if (env) {
     
@@ -402,27 +421,36 @@ LZGLog *lzg_log_get_default (int reset)
       }
       free (epath);
 
-      size_t len = strlen (env) + 1 + strlen (LZG_TARGET_DIR) + 1 + 24 + 5;
+      time_t t = time(NULL);
+      struct tm ttm;
+      localtime_r(&t, &ttm);
+      char date[100] = {0};
+      if (!strftime(date, sizeof(date), "%Y-%m-%d_%H%M%S", &ttm))
+        date[0] = '\0';
+
+      size_t len = strlen (env) + 1/*/*/ + strlen (LZG_TARGET_DIR) + 1/*/*/ + strnlen(date, 100) + 1/*_*/ + 24/*pid*/ + 5/*.log+\0*/ + 3/*.gz*/;
       char *path = malloc (sizeof (char) * len);
       if (!path) {
-        free(epath);
         free(log);
         log = NULL;
         return NULL;
       }
       
-      time_t t = time(NULL);
-      struct tm ttm;
-      localtime_r(&t, &ttm);
-      char date[100] = {0};
+      //snprintf (path, len, "%s/%s/%s_%d.log", env, LZG_TARGET_DIR, date, getpid());
+      //typeof(open) *original_open;
+      //original_open = dlsym(RTLD_NEXT, "open");
+      //log->write_fd = (*original_open) (path, O_WRONLY | O_CREAT | O_APPEND, 00666);
 
-      strftime(date, sizeof(date), "%Y-%m-%d_%H%M%S", &ttm);
-      snprintf (path, len, "%s/%s/%s_%d.log", env, LZG_TARGET_DIR, date, getpid());
-      
-      typeof(open) *original_open;
-      original_open = dlsym(RTLD_NEXT, "open");
-      log->write_fd = (*original_open) (path, O_WRONLY | O_CREAT | O_APPEND, 00666);
+      snprintf (path, len, "%s/%s/%s_%d.log.gz", env, LZG_TARGET_DIR, date, getpid());
+      log->write_zfd = gzopen(path, "a");
+      free (path);
+
       lzg_log_log_process_data(log);
+
+      if (!_lzg_exit_registered) {
+        _lzg_exit_registered = 1;
+        atexit(lzg_log_shutdown);
+      }
     }
   }
 
@@ -467,8 +495,9 @@ void lzg_log_insert_event (LZGLog *log, LZGEvent *event)
     ++i;
   }
 
-  if(log->write_fd >= 0 && lzg_log_allowed_to_log()) {
-    write(log->write_fd, msg, strlen(msg));
+  if(log->write_zfd != NULL && lzg_log_allowed_to_log()) {
+    //write(log->write_fd, msg, strlen(msg));
+    gzwrite(log->write_zfd, msg, strlen(msg));
   }
   
   free(msg);
