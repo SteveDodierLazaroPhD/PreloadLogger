@@ -18,7 +18,7 @@
 
 CC=gcc
 
-CFLAGS=-O3  -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN -Wl,--no-as-needed -ldl -D_GNU_SOURCE
+CFLAGS=-O3  -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN -Wl,--no-as-needed -ldl -D_GNU_SOURCE -fPIC
 #CFLAGS=-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7
 #CFLAGS=-g -DDEBUG
 #CFLAGS=-O3 -Wall -Wwrite-strings -Wpointer-arith -Wconversion \

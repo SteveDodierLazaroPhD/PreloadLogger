@@ -740,7 +740,7 @@ EOF
   fi
 fi
 
-CFLAGS="$CFLAGS -Wl,--no-as-needed -ldl -D_GNU_SOURCE"
+CFLAGS="$CFLAGS -Wl,--no-as-needed -ldl -D_GNU_SOURCE -fPIC"
 
 # show the results in the log
 echo >> configure.log
