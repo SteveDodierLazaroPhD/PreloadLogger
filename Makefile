@@ -3,8 +3,11 @@ all: lib
 test-run: test lib
 	LD_PRELOAD=$(DESTDIR)/usr/lib/libPreloadLogger.so ./preload-logger-test
 
-lib:
-	gcc -Wall -fPIC -DPIC -shared -o lib.so lib.c logger.c gslist.c -ldl -O0 -g
+lib: zlib.a
+	gcc -Wall -fPIC -DPIC -shared -o lib.so lib.c zlib/libz.a logger.c gslist.c -ldl -O0 -g
+
+zlib.a:
+	make -C zlib
 
 test:
 	gcc test.c -g -O0 -o preload-logger-test -lrt
