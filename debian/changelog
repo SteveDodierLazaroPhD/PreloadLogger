@@ -1,4 +1,4 @@
-preload-logger (0.10-0ubuntu0) UNRELEASED; urgency=medium
+preload-logger (0.10-0ubuntu0) vivid; urgency=medium
 
   * Now using a more compact logging format
   * Now using zlib to create compresssed logs
