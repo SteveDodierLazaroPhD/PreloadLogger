@@ -575,3 +575,42 @@ int ZEXPORT gzclose_w(file)
     free(state);
     return ret;
 }
+
+/* -- see zlib.h -- */
+int ZEXPORT gzclose_no_flush(file)
+    gzFile file;
+{
+    int ret = Z_OK;
+    gz_statep state;
+
+    /* get internal structure */
+    if (file == NULL)
+        return Z_STREAM_ERROR;
+    state = (gz_statep)file;
+
+    /* check that we're writing */
+    if (state->mode != GZ_WRITE)
+        return Z_STREAM_ERROR;
+
+    /* check for seek request */
+    if (state->seek) {
+        state->seek = 0;
+        if (gz_zero(state, state->skip) == -1)
+            ret = state->err;
+    }
+
+    /* flush, free memory, and close file */
+    if (state->size) {
+        if (!state->direct) {
+            (void)deflateEnd(&(state->strm));
+            free(state->out);
+        }
+        free(state->in);
+    }
+    gz_error(state, Z_OK, NULL);
+    free(state->path);
+    if (((typeof (close) *) dlsym(RTLD_NEXT, "close"))(state->fd) == -1)
+        ret = Z_ERRNO;
+    free(state);
+    return ret;
+}

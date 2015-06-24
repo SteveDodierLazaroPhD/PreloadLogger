@@ -1534,6 +1534,13 @@ ZEXTERN int ZEXPORT gzclose_w OF((gzFile file));
    zlib library.
 */
 
+ZEXTERN int ZEXPORT gzclose_no_flush OF((gzFile file));
+/*
+     Same as gzclose_w(), except that the remaining uncompressed data will not
+   be flushed to the file. Useful for when you need to close a gzFile handle
+   after a fork in only one of the resulting processes.
+*/
+
 ZEXTERN const char * ZEXPORT gzerror OF((gzFile file, int *errnum));
 /*
      Returns the error message for the last error which occurred on the given
