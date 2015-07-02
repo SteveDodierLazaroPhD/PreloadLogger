@@ -244,7 +244,9 @@ int open (const char *file, int oflag, ...)
 
   typeof(open) *original_open = dlsym(RTLD_NEXT, "open");
   int ret = (*original_open)(file, oflag, momo);
+  int saved_errno = errno;
   prelog_open(ret, OPEN_SCI, O_CREAT & oflag, -1, file, oflag);
+  errno = saved_errno;
   return ret;
 }
 
@@ -257,8 +259,10 @@ int open64 (const char *file, int oflag, ...)
 
   typeof(open64) *original_open = dlsym(RTLD_NEXT, "open64");
   int ret = (*original_open)(file, oflag, momo);
+  int saved_errno = errno;
    prelog_open(ret, OPEN64_SCI, O_CREAT & oflag, -1, file, oflag | O_LARGEFILE);
   va_end(list);
+  errno = saved_errno;
   return ret;
 }
 
@@ -271,7 +275,9 @@ int openat (int dirfd, const char *file, int oflag, ...)
 
   typeof(openat) *original_open = dlsym(RTLD_NEXT, "openat");
   int ret = (*original_open)(dirfd, file, oflag, momo);
+  int saved_errno = errno;
   prelog_open(ret, OPENAT_SCI, O_CREAT & oflag, dirfd, file, oflag);
+  errno = saved_errno;
   return ret;
 }
 
@@ -284,7 +290,9 @@ int openat64 (int dirfd, const char *file, int oflag, ...)
 
   typeof(openat64) *original_open = dlsym(RTLD_NEXT, "openat64");
   int ret = (*original_open)(dirfd, file, oflag, momo);
+  int saved_errno = errno;
   prelog_open(ret, OPENAT64_SCI, O_CREAT & oflag, dirfd, file, oflag | O_LARGEFILE);
+  errno = saved_errno;
   return ret;
 }
 
@@ -292,7 +300,9 @@ int creat (const char *pathname, mode_t mode)
 {
   typeof(creat) *original_open = dlsym(RTLD_NEXT, "creat");
   int ret = (*original_open)(pathname, mode);
+  int saved_errno = errno;
   prelog_open(ret, CREAT_SCI, 1, -1, pathname, O_CREAT|O_WRONLY|O_TRUNC);
+  errno = saved_errno;
   return ret;
 }
 
@@ -326,10 +336,12 @@ int dup(int oldfd)
 {
   typeof(dup) *original_dup = dlsym(RTLD_NEXT, "dup");
   int ret = (*original_dup)(oldfd);
+  int saved_errno = errno;
 
   int newfd = ret;
   prelog_dup (ret, DUP_SCI, oldfd, newfd, 0);
 
+  errno = saved_errno;
   return ret;
 }
 
@@ -337,8 +349,10 @@ int dup2(int oldfd, int newfd)
 {
   typeof(dup2) *original_dup = dlsym(RTLD_NEXT, "dup2");
   int ret = (*original_dup)(oldfd, newfd);
+  int saved_errno = errno;
   prelog_dup (ret, DUP2_SCI, oldfd, newfd, 0);
 
+  errno = saved_errno;
   return ret;
 }
 
@@ -346,8 +360,10 @@ int dup3(int oldfd, int newfd, int flags)
 {
   typeof(dup3) *original_dup = dlsym(RTLD_NEXT, "dup3");
   int ret = (*original_dup)(oldfd, newfd, flags);
+  int saved_errno = errno;
   prelog_dup (ret, DUP3_SCI, oldfd, newfd, flags);
 
+  errno = saved_errno;
   return ret;
 }
 
@@ -380,7 +396,9 @@ int link(const char *oldpath, const char *newpath)
 {
   typeof(link) *original_link = dlsym(RTLD_NEXT, "link");
   int ret = (*original_link)(oldpath, newpath);
+  int saved_errno = errno;
   prelog_link (ret, LINK_SCI, oldpath, -1, newpath, -1, 0);
+  errno = saved_errno;
   return ret;
 }
 
@@ -389,7 +407,9 @@ int linkat(int olddirfd, const char *oldpath,
 {
   typeof(linkat) *original_link = dlsym(RTLD_NEXT, "linkat");
   int ret = (*original_link)(olddirfd, oldpath, newdirfd, newpath, flags);
+  int saved_errno = errno;
   prelog_link (ret, LINKAT_SCI, oldpath, -1, newpath, -1, flags);
+  errno = saved_errno;
   return ret;
 }
 
@@ -397,7 +417,9 @@ int symlink(const char *target, const char *newpath)
 {
   typeof(symlink) *original_symlink = dlsym(RTLD_NEXT, "symlink");
   int ret = (*original_symlink)(target, newpath);
+  int saved_errno = errno;
   prelog_link (ret, SYMLINK_SCI, target, -1, newpath, -1, 0);
+  errno = saved_errno;
   return ret;
 }
 
@@ -405,7 +427,9 @@ int symlinkat(const char *target, int newdirfd, const char *linkpath)
 {
   typeof(symlinkat) *original_symlink = dlsym(RTLD_NEXT, "symlinkat");
   int ret = (*original_symlink)(target, newdirfd, linkpath);
+  int saved_errno = errno;
   prelog_link (ret, SYMLINKAT_SCI, target, -1, linkpath, newdirfd, 0);
+  errno = saved_errno;
   return ret;
 }
 
@@ -466,7 +490,9 @@ FILE *fopen(const char *path, const char *mode)
 {
   typeof(fopen) *original_open = dlsym(RTLD_NEXT, "fopen");
   FILE *ret = (*original_open)(path, mode);
+  int saved_errno = errno;
   prelog_fopen (ret, path, mode, FOPEN_SCI, 0);
+  errno = saved_errno;
   return ret;
 }
 
@@ -474,7 +500,9 @@ FILE *freopen(const char *path, const char *mode, FILE *stream)
 {
   typeof(freopen) *original_open = dlsym(RTLD_NEXT, "freopen");
   FILE *ret = (*original_open)(path, mode, stream);
+  int saved_errno = errno;
   prelog_fopen (ret, path, mode, FREOPEN_SCI, 0);
+  errno = saved_errno;
   return ret;
 }
 
@@ -482,6 +510,7 @@ FILE *fdopen(int fd, const char *mode)
 {
   typeof(fdopen) *original_open = dlsym(RTLD_NEXT, "fdopen");
   FILE *ret = (*original_open)(fd, mode);
+  int saved_errno = errno;
 
   if(prelog_slist_find(fds, PRELOG_INT_TO_POINTER(fd))) {
     char *error_str = NULL;//, error[1024];
@@ -510,6 +539,7 @@ FILE *fdopen(int fd, const char *mode)
     }
   }
 
+  errno = saved_errno;
   return ret;
 }
 
@@ -517,7 +547,9 @@ int mkfifo(const char *pathname, mode_t mode)
 {
   typeof(mkfifo) *original_mkfifo = dlsym(RTLD_NEXT, "mkfifo");
   int ret = (*original_mkfifo)(pathname, mode);
+  int saved_errno = errno;
   prelog_open(ret, MKFIFO_SCI, 1, -1, pathname, 0);
+  errno = saved_errno;
   return ret;
 }
 
@@ -525,7 +557,9 @@ int mkfifoat(int dirfd, const char *pathname, mode_t mode)
 {
   typeof(mkfifoat) *original_mkfifo = dlsym(RTLD_NEXT, "mkfifoat");
   int ret = (*original_mkfifo)(dirfd, pathname, mode);
+  int saved_errno = errno;
   prelog_open(ret, MKFIFOAT_SCI, 1, dirfd, pathname, 0);
+  errno = saved_errno;
   return ret;
 }
 
@@ -554,7 +588,9 @@ int pipe2(int pipefd[2], int flags)
 {
   typeof(pipe2) *original_pipe2 = dlsym(RTLD_NEXT, "pipe2");
   int ret = (*original_pipe2)(pipefd, flags);
+  int saved_errno = errno;
   prelog_pipe(ret, pipefd, flags, PIPE2_SCI);
+  errno = saved_errno;
   return ret;
 }
 
@@ -562,7 +598,9 @@ int pipe(int pipefd[2])
 {
   typeof(pipe) *original_pipe = dlsym(RTLD_NEXT, "pipe");
   int ret = (*original_pipe)(pipefd);
+  int saved_errno = errno;
   prelog_pipe(ret, pipefd, 0, PIPE_SCI);
+  errno = saved_errno;
   return ret;
 }
 
@@ -570,6 +608,7 @@ int socketpair(int domain, int type, int protocol, int sv[2])
 {
   typeof(socketpair) *original_socket = dlsym(RTLD_NEXT, "socketpair");
   int ret = (*original_socket)(domain, type, protocol, sv);
+  int saved_errno = errno;
 
   if ((geteuid() >= 1000) && (domain == AF_UNIX || domain == AF_LOCAL) && (errno!=EFAULT)) {
     char *error_str = NULL;//, error[1024];
@@ -594,6 +633,7 @@ int socketpair(int domain, int type, int protocol, int sv[2])
     fds = prelog_slist_prepend(fds, PRELOG_INT_TO_POINTER(sv[1]));
   }
 
+  errno = saved_errno;
   return ret;
 }
 
@@ -601,7 +641,9 @@ FILE *popen(const char *command, const char *type)
 {
   typeof(popen) *original_open = dlsym(RTLD_NEXT, "popen");
   FILE *ret = (*original_open)(command, type);
+  int saved_errno = errno;
   prelog_fopen (ret, command, type, POPEN_SCI, 1);
+  errno = saved_errno;
   return ret;
 }
 
@@ -609,6 +651,7 @@ pid_t fork(void)
 {
   typeof(fork) *original_fork = dlsym(RTLD_NEXT, "fork");
   pid_t ret = (*original_fork)();
+  int saved_errno = errno;
 
   // Reset the log for the child
   if (ret == 0)
@@ -637,6 +680,7 @@ pid_t fork(void)
     }
   }
 
+  errno = saved_errno;
   return ret;
 }
 
@@ -644,6 +688,7 @@ DIR *opendir(const char *name)
 {
   typeof(opendir) *original_open = dlsym(RTLD_NEXT, "opendir");
   DIR *ret = (*original_open)(name);
+  int saved_errno = errno;
 
   if((geteuid() >= 1000) && (prelog_is_home (name) || prelog_is_tmp (name) || prelog_is_relative (name))) {
     char *error_str = NULL;//, error[1024];
@@ -663,6 +708,7 @@ DIR *opendir(const char *name)
     }
   }
 
+  errno = saved_errno;
   return ret;
 }
 
@@ -670,6 +716,7 @@ DIR *fdopendir(int fd)
 {
   typeof(fdopendir) *original_open = dlsym(RTLD_NEXT, "fdopendir");
   DIR *ret = (*original_open)(fd);
+  int saved_errno = errno;
 
   if(prelog_slist_find(fds, PRELOG_INT_TO_POINTER(fd))) {
     char *error_str = NULL;//, error[1024];
@@ -696,6 +743,7 @@ DIR *fdopendir(int fd)
     }
   }
 
+  errno = saved_errno;
   return ret;
 }
 
@@ -703,6 +751,7 @@ int shm_open(const char *name, int oflag, mode_t mode)
 {
   typeof(shm_open) *original_shm_open = dlsym(RTLD_NEXT, "shm_open");
   int ret = (*original_shm_open)(name, oflag, mode);
+  int saved_errno = errno;
 
   if (geteuid() >= 1000)
   {
@@ -722,6 +771,7 @@ int shm_open(const char *name, int oflag, mode_t mode)
     }
   }
   
+  errno = saved_errno;
   return ret;
 }
 
@@ -729,6 +779,7 @@ int shm_unlink(const char *name)
 {
  typeof(shm_unlink) *original_shm_unlink = dlsym(RTLD_NEXT, "shm_unlink");
   int ret = (*original_shm_unlink)(name);
+  int saved_errno = errno;
 
   if (geteuid() >= 1000)
   {
@@ -748,6 +799,7 @@ int shm_unlink(const char *name)
     }
   }
   
+  errno = saved_errno;
   return ret;
 }
 
@@ -755,8 +807,11 @@ int mkdir(const char *pathname, mode_t mode)
 {
   typeof(mkdir) *original_mkdir = dlsym(RTLD_NEXT, "mkdir");
   int ret = (*original_mkdir)(pathname, mode);
+  int saved_errno = errno;
   
   prelog_open(ret, MKDIR_SCI, 1, -1, pathname, O_CREAT);
+
+  errno = saved_errno;
   return ret;
 }
 
@@ -764,8 +819,11 @@ int mkdirat(int dirfd, const char *pathname, mode_t mode)
 {
   typeof(mkdirat) *original_mkdir = dlsym(RTLD_NEXT, "mkdirat");
   int ret = (*original_mkdir)(dirfd, pathname, mode);
+  int saved_errno = errno;
   
   prelog_open(ret, MKDIRAT_SCI, 1, dirfd, pathname, O_CREAT);
+
+  errno = saved_errno;
   return ret;
 }
 
@@ -792,8 +850,10 @@ int rename(const char *oldpath, const char *newpath)
 {
   typeof(rename) *original_rename = dlsym(RTLD_NEXT, "rename");
   int ret = (*original_rename)(oldpath, newpath);
+  int saved_errno = errno;
   
   prelog_rename(ret, oldpath, -1, newpath, -1, 0, RENAME_SCI);
+  errno = saved_errno;
   return ret;
 }
 
@@ -802,8 +862,10 @@ int renameat(int olddirfd, const char *oldpath,
 {
   typeof(renameat) *original_rename = dlsym(RTLD_NEXT, "renameat");
   int ret = (*original_rename)(olddirfd, oldpath, newdirfd, newpath);
+  int saved_errno = errno;
   
   prelog_rename(ret, oldpath, olddirfd, newpath, newdirfd, 0, RENAMEAT_SCI);
+  errno = saved_errno;
   return ret;
 }
 
@@ -812,8 +874,10 @@ int renameat2(int olddirfd, const char *oldpath,
 {
   typeof(renameat2) *original_rename = dlsym(RTLD_NEXT, "renameat2");
   int ret = (*original_rename)(olddirfd, oldpath, newdirfd, newpath, flags);
+  int saved_errno = errno;
   
   prelog_rename(ret, oldpath, olddirfd, newpath, newdirfd, flags, RENAMEAT2_SCI);
+  errno = saved_errno;
   return ret;
 }
 
@@ -823,6 +887,7 @@ int close (int fd)
 {
   typeof(close) *original_close = dlsym(RTLD_NEXT, "close");
   int ret = (*original_close)(fd);
+  int saved_errno = errno;
   
   if(prelog_slist_find(fds, PRELOG_INT_TO_POINTER(fd))) {
     char *error_str = NULL;//, error[1024];
@@ -844,6 +909,7 @@ int close (int fd)
     fds = prelog_slist_remove(fds, PRELOG_INT_TO_POINTER(fd));
   }
   
+  errno = saved_errno;
   return ret;
 }
 
@@ -874,7 +940,9 @@ int fclose (FILE *fp)
 {
   typeof(fclose) *original_fclose = dlsym(RTLD_NEXT, "fclose");
   int ret = (*original_fclose)(fp);
+  int saved_errno = errno;
   prelog_fclose (ret, fp, FCLOSE_SCI);
+  errno = saved_errno;
   return ret;
 }
 
@@ -882,7 +950,9 @@ int pclose (FILE *fp)
 {
   typeof(pclose) *original_pclose = dlsym(RTLD_NEXT, "pclose");
   int ret = (*original_pclose)(fp);
+  int saved_errno = errno;
   prelog_fclose (ret /* not actual fs error... */, fp, PCLOSE_SCI);
+  errno = saved_errno;
   return ret;
 }
 
@@ -890,6 +960,7 @@ int closedir(DIR *dirp)
 {
   typeof(closedir) *original_closedir = dlsym(RTLD_NEXT, "closedir");
   int ret = (*original_closedir)(dirp);
+  int saved_errno = errno;
   if(prelog_slist_find(dirs, dirp)) {
     char *error_str = NULL;//, error[1024];
     if (errno) {
@@ -910,6 +981,7 @@ int closedir(DIR *dirp)
     dirs = prelog_slist_remove(dirs, dirp);
   }
 
+  errno = saved_errno;
   return ret;
 }
 
@@ -918,6 +990,7 @@ int socket(int domain, int type, int protocol)
 {
   typeof(socket) *original_socket = dlsym(RTLD_NEXT, "socket");
   int ret = (*original_socket)(domain, type, protocol);
+  int saved_errno = errno;
 
   if ((geteuid() >= 1000) && (domain == AF_UNIX || domain == AF_LOCAL)) {
     char *error_str = NULL;//, error[1024];
@@ -937,6 +1010,7 @@ int socket(int domain, int type, int protocol)
     fds = prelog_slist_prepend(fds, PRELOG_INT_TO_POINTER(ret));
   }
 
+  errno = saved_errno;
   return ret;
 }
 
@@ -971,8 +1045,10 @@ int remove (const char *pathname)
 {
   typeof(remove) *original_remove = dlsym(RTLD_NEXT, "remove");
   int ret = (*original_remove)(pathname);
+  int saved_errno = errno;
 
   prelog_rm (ret, pathname, REMOVE_SCI);
+  errno = saved_errno;
   return ret;
 }
 
@@ -980,8 +1056,10 @@ int rmdir (const char *pathname)
 {
   typeof(rmdir) *original_rmdir = dlsym(RTLD_NEXT, "rmdir");
   int ret = (*original_rmdir)(pathname);
+  int saved_errno = errno;
 
   prelog_rm (ret, pathname, RMDIR_SCI);
+  errno = saved_errno;
   return ret;
 }
 
@@ -989,8 +1067,10 @@ int unlink (const char *pathname)
 {
   typeof(unlink) *original_unlink = dlsym(RTLD_NEXT, "unlink");
   int ret = (*original_unlink)(pathname);
+  int saved_errno = errno;
 
   prelog_rm (ret, pathname, UNLINK_SCI);
+  errno = saved_errno;
   return ret;
 }
 
