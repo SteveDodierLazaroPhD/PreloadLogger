@@ -60,8 +60,8 @@
 #    define gzbuffer              z_gzbuffer
 #    define gzclearerr            z_gzclearerr
 #    define gzclose               z_gzclose
-#    define gzclose_r             z_gzclose_r
-#    define gzclose_w             z_gzclose_w
+#    define prelog_gzclose_r             z_gzclose_r
+#    define prelog_gzclose_w             z_gzclose_w
 #    define gzdirect              z_gzdirect
 #    define gzdopen               z_gzdopen
 #    define gzeof                 z_gzeof
@@ -72,10 +72,10 @@
 #    define gzgets                z_gzgets
 #    define gzoffset              z_gzoffset
 #    define gzoffset64            z_gzoffset64
-#    define gzopen                z_gzopen
-#    define gzopen64              z_gzopen64
+#    define prelog_gzopen                z_gzopen
+#    define prelog_gzopen64              z_gzopen64
 #    ifdef _WIN32
-#      define gzopen_w              z_gzopen_w
+#      define prelog_gzopen_w              z_gzopen_w
 #    endif
 #    define gzprintf              z_gzprintf
 #    define gzvprintf             z_gzvprintf

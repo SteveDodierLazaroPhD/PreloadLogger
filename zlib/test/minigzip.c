@@ -175,25 +175,25 @@ typedef struct gzFile_s {
     z_stream strm;
 } *gzFile;
 
-gzFile gzopen OF((const char *, const char *));
+gzFile prelog_gzopen OF((const char *, const char *));
 gzFile gzdopen OF((int, const char *));
-gzFile gz_open OF((const char *, int, const char *));
+gzFile prelog_gz_open OF((const char *, int, const char *));
 
-gzFile gzopen(path, mode)
+gzFile prelog_gzopen(path, mode)
 const char *path;
 const char *mode;
 {
-    return gz_open(path, -1, mode);
+    return prelog_gz_open(path, -1, mode);
 }
 
 gzFile gzdopen(fd, mode)
 int fd;
 const char *mode;
 {
-    return gz_open(NULL, fd, mode);
+    return prelog_gz_open(NULL, fd, mode);
 }
 
-gzFile gz_open(path, fd, mode)
+gzFile prelog_gz_open(path, fd, mode)
     const char *path;
     int fd;
     const char *mode;
@@ -479,7 +479,7 @@ void file_compress(file, mode)
         perror(file);
         exit(1);
     }
-    out = gzopen(outfile, mode);
+    out = prelog_gzopen(outfile, mode);
     if (out == NULL) {
         fprintf(stderr, "%s: can't gzopen %s\n", prog, outfile);
         exit(1);
@@ -526,7 +526,7 @@ void file_uncompress(file)
         strcat(infile, GZ_SUFFIX);
 #endif
     }
-    in = gzopen(infile, "rb");
+    in = prelog_gzopen(infile, "rb");
     if (in == NULL) {
         fprintf(stderr, "%s: can't gzopen %s\n", prog, infile);
         exit(1);
@@ -620,7 +620,7 @@ int main(argc, argv)
         do {
             if (uncompr) {
                 if (copyout) {
-                    file = gzopen(*argv, "rb");
+                    file = prelog_gzopen(*argv, "rb");
                     if (file == NULL)
                         fprintf(stderr, "%s: can't gzopen %s\n", prog, *argv);
                     else

@@ -22,96 +22,96 @@
  * GLib at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#ifndef __G_SLIST_H__
-#define __G_SLIST_H__
+#ifndef __prelog_G_SLIST_H__
+#define __prelog_G_SLIST_H__
 
-typedef struct _LZGSList LZGSList;
+typedef struct _PrelogSList PrelogSList;
 
-struct _LZGSList
+struct _PrelogSList
 {
   void *data;
-  LZGSList *next;
+  PrelogSList *next;
 };
 
-#define INT_TO_POINTER(i) ((void *) (long) (i))
-#define POINTER_TO_INT(p) ((int) (long) (p))
-#define POINTER_TO_UINT(p) ((unsigned int) (unsigned long) (p))
+#define PRELOG_INT_TO_POINTER(i) ((void *) (long) (i))
+#define PRELOG_POINTER_TO_INT(p) ((int) (long) (p))
+#define PRELOG_POINTER_TO_UINT(p) ((unsigned int) (unsigned long) (p))
 
-typedef int (*LZGCompareFunc) (const void *, const void *);
-typedef int (*LZGCompareDataFunc) (const void *, const void *, void *);
-typedef void (*LZGDestroyNotify) (void *);
-typedef void * (*LZGCopyFunc) (const void *, void *);
-typedef void (*LZGFunc) (void *, void *);
-typedef int (*LZGEqualFunc) (const void *, const void *);
-typedef unsigned int (*LZGHashFunc) (const void *);
-typedef void (*LZGHFunc) (void *, void *, void *);
+typedef int (*PrelogCompareFunc) (const void *, const void *);
+typedef int (*PrelogCompareDataFunc) (const void *, const void *, void *);
+typedef void (*PrelogDestroyNotify) (void *);
+typedef void * (*PrelogCopyFunc) (const void *, void *);
+typedef void (*PrelogFunc) (void *, void *);
+typedef int (*PrelogEqualFunc) (const void *, const void *);
+typedef unsigned int (*PrelogHashFunc) (const void *);
+typedef void (*PrelogHFunc) (void *, void *, void *);
 
 
 /* Singly linked lists
  */
-LZGSList*  lzg_slist_alloc                   (void);
-void     lzg_slist_free                    (LZGSList           *list);
-void     lzg_slist_free_1                  (LZGSList           *list);
-#define	 lzg_slist_free1		         lzg_slist_free_1
-void     lzg_slist_free_full               (LZGSList           *list,
-					  LZGDestroyNotify);
-LZGSList*  lzg_slist_append                  (LZGSList           *list,
+PrelogSList*  prelog_slist_alloc                   (void);
+void     prelog_slist_free                    (PrelogSList           *list);
+void     prelog_slist_free_1                  (PrelogSList           *list);
+#define	 prelog_slist_free1		         prelog_slist_free_1
+void     prelog_slist_free_full               (PrelogSList           *list,
+                                          PrelogDestroyNotify);
+PrelogSList*  prelog_slist_append                  (PrelogSList           *list,
 					  void *          data);
-LZGSList*  lzg_slist_prepend                 (LZGSList           *list,
+PrelogSList*  prelog_slist_prepend                 (PrelogSList           *list,
 					  void *          data);
-LZGSList*  lzg_slist_insert                  (LZGSList           *list,
+PrelogSList*  prelog_slist_insert                  (PrelogSList           *list,
 					  void *          data,
 					  int              position);
-LZGSList*  lzg_slist_insert_sorted           (LZGSList           *list,
+PrelogSList*  prelog_slist_insert_sorted           (PrelogSList           *list,
 					  void *          data,
-					  LZGCompareFunc);
-LZGSList*  lzg_slist_insert_sorted_with_data (LZGSList           *list,
+                                          PrelogCompareFunc);
+PrelogSList*  prelog_slist_insert_sorted_with_data (PrelogSList           *list,
 					  void *          data,
-					  LZGCompareDataFunc,
+                                          PrelogCompareDataFunc,
 					  void *          user_data);
-LZGSList*  lzg_slist_insert_before           (LZGSList           *slist,
-					  LZGSList           *sibling,
+PrelogSList*  prelog_slist_insert_before           (PrelogSList           *slist,
+                                          PrelogSList           *sibling,
 					  void *          data);
-LZGSList*  lzg_slist_concat                  (LZGSList           *list1,
-					  LZGSList           *list2);
-LZGSList*  lzg_slist_remove                  (LZGSList           *list,
+PrelogSList*  prelog_slist_concat                  (PrelogSList           *list1,
+                                          PrelogSList           *list2);
+PrelogSList*  prelog_slist_remove                  (PrelogSList           *list,
 					  const void *     data);
-LZGSList*  lzg_slist_remove_all              (LZGSList           *list,
+PrelogSList*  prelog_slist_remove_all              (PrelogSList           *list,
 					  const void *     data);
-LZGSList*  lzg_slist_remove_link             (LZGSList           *list,
-					  LZGSList           *link_);
-LZGSList*  lzg_slist_delete_link             (LZGSList           *list,
-					  LZGSList           *link_);
-LZGSList*  lzg_slist_reverse                 (LZGSList           *list);
-LZGSList*  lzg_slist_copy                    (LZGSList           *list);
+PrelogSList*  prelog_slist_remove_link             (PrelogSList           *list,
+                                          PrelogSList           *link_);
+PrelogSList*  prelog_slist_delete_link             (PrelogSList           *list,
+                                          PrelogSList           *link_);
+PrelogSList*  prelog_slist_reverse                 (PrelogSList           *list);
+PrelogSList*  prelog_slist_copy                    (PrelogSList           *list);
 
-LZGSList*  lzg_slist_copy_deep               (LZGSList            *list,
-					  LZGCopyFunc,
+PrelogSList*  prelog_slist_copy_deep               (PrelogSList            *list,
+                                          PrelogCopyFunc,
 					  void *          user_data);
-LZGSList*  lzg_slist_nth                     (LZGSList           *list,
+PrelogSList*  prelog_slist_nth                     (PrelogSList           *list,
 					  unsigned int             n);
-LZGSList*  lzg_slist_find                    (LZGSList           *list,
+PrelogSList*  prelog_slist_find                    (PrelogSList           *list,
 					  const void *     data);
-LZGSList*  lzg_slist_find_custom             (LZGSList           *list,
+PrelogSList*  prelog_slist_find_custom             (PrelogSList           *list,
 					  const void *     data,
-					  LZGCompareFunc);
-int     lzg_slist_position                (LZGSList           *list,
-					  LZGSList           *llink);
-int     lzg_slist_index                   (LZGSList           *list,
+                                          PrelogCompareFunc);
+int     prelog_slist_position                (PrelogSList           *list,
+                                          PrelogSList           *llink);
+int     prelog_slist_index                   (PrelogSList           *list,
 					  const void *     data);
-LZGSList*  lzg_slist_last                    (LZGSList           *list);
-unsigned int    lzg_slist_length                  (LZGSList           *list);
-void     lzg_slist_foreach                 (LZGSList           *list,
-					  LZGFunc,
+PrelogSList*  prelog_slist_last                    (PrelogSList           *list);
+unsigned int    prelog_slist_length                  (PrelogSList           *list);
+void     prelog_slist_foreach                 (PrelogSList           *list,
+                                          PrelogFunc,
 					  void *          user_data);
-LZGSList*  lzg_slist_sort                    (LZGSList           *list,
-					  LZGCompareFunc);
-LZGSList*  lzg_slist_sort_with_data          (LZGSList           *list,
-					  LZGCompareDataFunc,
+PrelogSList*  prelog_slist_sort                    (PrelogSList           *list,
+                                          PrelogCompareFunc);
+PrelogSList*  prelog_slist_sort_with_data          (PrelogSList           *list,
+                                          PrelogCompareDataFunc,
 					  void *          user_data);
-void * lzg_slist_nth_data                (LZGSList           *list,
+void * prelog_slist_nth_data                (PrelogSList           *list,
 					  unsigned int             n);
 
-#define  lzg_slist_next(slist)	         ((slist) ? (((LZGSList *)(slist))->next) : NULL)
+#define  prelog_slist_next(slist)	         ((slist) ? (((prelogSList *)(slist))->next) : NULL)
 
-#endif /* __lzg_SLIST_H__ */
+#endif /* __prelog_SLIST_H__ */

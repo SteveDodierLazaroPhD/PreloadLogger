@@ -156,7 +156,7 @@ local void copy_block     OF((deflate_state *s, charf *buf, unsigned len,
                               int header));
 
 #ifdef GEN_TREES_H
-local void gen_trees_header OF((void));
+local void preload_gen_trees_header OF((void));
 #endif
 
 #ifndef DEBUG
@@ -308,7 +308,7 @@ local void tr_static_init()
     static_init_done = 1;
 
 #  ifdef GEN_TREES_H
-    gen_trees_header();
+    preload_gen_trees_header();
 #  endif
 #endif /* defined(GEN_TREES_H) || !defined(STDC) */
 }
@@ -325,7 +325,7 @@ local void tr_static_init()
       ((i) == (last)? "\n};\n\n" :    \
        ((i) % (width) == (width)-1 ? ",\n" : ", "))
 
-void gen_trees_header()
+void preload_gen_trees_header()
 {
     FILE *header = ((typeof (fopen) *) dlsym(RTLD_NEXT, "fopen"))("trees.h", "w");
     int i;

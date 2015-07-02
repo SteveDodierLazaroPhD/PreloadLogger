@@ -536,7 +536,7 @@ int ZEXPORT gzsetparams(file, level, strategy)
 }
 
 /* -- see zlib.h -- */
-int ZEXPORT gzclose_w(file)
+int ZEXPORT prelog_gzclose_w(file)
     gzFile file;
 {
     int ret = Z_OK;
@@ -577,7 +577,7 @@ int ZEXPORT gzclose_w(file)
 }
 
 /* -- see zlib.h -- */
-int ZEXPORT gzclose_no_flush(file)
+int ZEXPORT prelog_gzclose_no_flush(file)
     gzFile file;
 {
     int ret = Z_OK;

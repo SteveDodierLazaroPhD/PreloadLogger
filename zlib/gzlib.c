@@ -17,7 +17,7 @@
 
 /* Local functions */
 local void gz_reset OF((gz_statep));
-local gzFile gz_open OF((const void *, int, const char *));
+local gzFile prelog_gz_open OF((const void *, int, const char *));
 
 #if defined UNDER_CE
 
@@ -88,7 +88,7 @@ local void gz_reset(state)
 }
 
 /* Open a gzip file either by name or file descriptor. */
-local gzFile gz_open(path, fd, mode)
+local gzFile prelog_gz_open(path, fd, mode)
     const void *path;
     int fd;
     const char *mode;
@@ -265,19 +265,19 @@ local gzFile gz_open(path, fd, mode)
 }
 
 /* -- see zlib.h -- */
-gzFile ZEXPORT gzopen(path, mode)
+gzFile ZEXPORT prelog_gzopen(path, mode)
     const char *path;
     const char *mode;
 {
-    return gz_open(path, -1, mode);
+    return prelog_gz_open(path, -1, mode);
 }
 
 /* -- see zlib.h -- */
-gzFile ZEXPORT gzopen64(path, mode)
+gzFile ZEXPORT prelog_gzopen64(path, mode)
     const char *path;
     const char *mode;
 {
-    return gz_open(path, -1, mode);
+    return prelog_gz_open(path, -1, mode);
 }
 
 /* -- see zlib.h -- */
@@ -295,18 +295,18 @@ gzFile ZEXPORT gzdopen(fd, mode)
 #else
     sprintf(path, "<fd:%d>", fd);   /* for debugging */
 #endif
-    gz = gz_open(path, fd, mode);
+    gz = prelog_gz_open(path, fd, mode);
     free(path);
     return gz;
 }
 
 /* -- see zlib.h -- */
 #ifdef _WIN32
-gzFile ZEXPORT gzopen_w(path, mode)
+gzFile ZEXPORT prelog_gzopen_w(path, mode)
     const wchar_t *path;
     const char *mode;
 {
-    return gz_open(path, -2, mode);
+    return prelog_gz_open(path, -2, mode);
 }
 #endif
 

@@ -57,7 +57,7 @@ local uLong crc32_combine_ OF((uLong crc1, uLong crc2, z_off64_t len2));
 
 local volatile int crc_table_empty = 1;
 local z_crc_t FAR crc_table[TBLS][256];
-local void make_crc_table OF((void));
+local void prelog_make_crc_table OF((void));
 #ifdef MAKECRCH
    local void write_table OF((FILE *, const z_crc_t FAR *));
 #endif /* MAKECRCH */
@@ -87,7 +87,7 @@ local void make_crc_table OF((void));
   allow for word-at-a-time CRC calculation for both big-endian and little-
   endian machines, where a word is four bytes.
 */
-local void make_crc_table()
+local void prelog_make_crc_table()
 {
     z_crc_t c;
     int n, k;
@@ -179,7 +179,7 @@ local void write_table(out, table)
 
 #else /* !DYNAMIC_CRC_TABLE */
 /* ========================================================================
- * Tables of CRC-32s of all single-byte values, made by make_crc_table().
+ * Tables of CRC-32s of all single-byte values, made by prelog_make_crc_table().
  */
 #include "crc32.h"
 #endif /* DYNAMIC_CRC_TABLE */
@@ -191,7 +191,7 @@ const z_crc_t FAR * ZEXPORT get_crc_table()
 {
 #ifdef DYNAMIC_CRC_TABLE
     if (crc_table_empty)
-        make_crc_table();
+        prelog_make_crc_table();
 #endif /* DYNAMIC_CRC_TABLE */
     return (const z_crc_t FAR *)crc_table;
 }
@@ -210,7 +210,7 @@ unsigned long ZEXPORT crc32(crc, buf, len)
 
 #ifdef DYNAMIC_CRC_TABLE
     if (crc_table_empty)
-        make_crc_table();
+        prelog_make_crc_table();
 #endif /* DYNAMIC_CRC_TABLE */
 
 #ifdef BYFOUR

@@ -32,9 +32,9 @@
 #include <time.h>
 #include "logger.h"
 
-static int _lzg_exit_registered = 0;
+static int _prelog_exit_registered = 0;
 
-char *_zg_get_actor_from_pid (pid_t pid)
+char *prelog_get_actor_from_pid (pid_t pid)
 {
   static char *cached = NULL;
   static pid_t cached_pid = 0;
@@ -132,9 +132,9 @@ char *_zg_get_actor_from_pid (pid_t pid)
   return strdup(actor_name);
 }
 
-LZGSubject *lzg_subject_new (void)
+PrelogSubject *prelog_subject_new (void)
 {
-  LZGSubject *s = malloc(sizeof(LZGSubject));
+  PrelogSubject *s = malloc(sizeof(PrelogSubject));
 
   if(!s)
     return NULL;
@@ -146,7 +146,7 @@ LZGSubject *lzg_subject_new (void)
   return s;
 }
 
-void lzg_subject_free (LZGSubject *s)
+void prelog_subject_free (PrelogSubject *s)
 {
   if(!s)
     return;
@@ -159,7 +159,7 @@ void lzg_subject_free (LZGSubject *s)
   free(s);
 }
 
-void lzg_subject_set_uri (LZGSubject *s, const char *uri)
+void prelog_subject_set_uri (PrelogSubject *s, const char *uri)
 {
   if(!s)
     return;
@@ -170,7 +170,7 @@ void lzg_subject_set_uri (LZGSubject *s, const char *uri)
   s->uri = strndup (uri, 8192);
 }
 
-void lzg_subject_set_origin (LZGSubject *s, const char *origin)
+void prelog_subject_set_origin (PrelogSubject *s, const char *origin)
 {
   if(!s)
     return;
@@ -181,7 +181,7 @@ void lzg_subject_set_origin (LZGSubject *s, const char *origin)
   s->origin = strndup (origin, 8192);
 }
 
-void lzg_subject_set_text (LZGSubject *s, const char *text)
+void prelog_subject_set_text (PrelogSubject *s, const char *text)
 {
   if(!s)
     return;
@@ -192,9 +192,9 @@ void lzg_subject_set_text (LZGSubject *s, const char *text)
   s->text = strndup (text, 8192);
 }
 
-LZGEvent *lzg_event_new (void)
+PrelogEvent *prelog_event_new (void)
 {
-  LZGEvent *e = malloc(sizeof(LZGEvent));
+  PrelogEvent *e = malloc(sizeof(PrelogEvent));
 
   if(!e)
     return NULL;
@@ -206,7 +206,7 @@ LZGEvent *lzg_event_new (void)
   return e;
 }
 
-void lzg_event_free (LZGEvent *e)
+void prelog_event_free (PrelogEvent *e)
 {
   if(!e)
     return;
@@ -214,7 +214,7 @@ void lzg_event_free (LZGEvent *e)
   if(e->subjects) {
     unsigned int i=0;
     while(e->subjects[i]) {
-      lzg_subject_free(e->subjects[i]);
+      prelog_subject_free(e->subjects[i]);
       ++i;
     }
     free(e->subjects);
@@ -223,7 +223,7 @@ void lzg_event_free (LZGEvent *e)
   free(e);
 }
 
-void lzg_event_set_interpretation (LZGEvent *e, const char *interpretation)
+void prelog_event_set_interpretation (PrelogEvent *e, const char *interpretation)
 {
   if(!e)
     return;
@@ -231,17 +231,7 @@ void lzg_event_set_interpretation (LZGEvent *e, const char *interpretation)
   e->interpretation = strndup (interpretation, 8192);
 }
 
-/*void lzg_event_set_manifestation (LZGEvent *e, const char *manifestation)
-{
-  if(!e)
-    return;
-
-  if(e->manifestation)
-    free(e->manifestation);
-  
-  e->manifestation = strndup (manifestation, 8192);
-}*/
-void lzg_event_add_subject (LZGEvent *e, LZGSubject *s)
+void prelog_event_add_subject (PrelogEvent *e, PrelogSubject *s)
 {
   if(!e || !s)
     return;
@@ -255,12 +245,12 @@ void lzg_event_add_subject (LZGEvent *e, LZGSubject *s)
     count = i;
   }
   
-  e->subjects = realloc(e->subjects, sizeof(LZGSubject*) * (count + 2)); // count + new element + trailing NULL
+  e->subjects = realloc(e->subjects, sizeof(PrelogSubject*) * (count + 2)); // count + new element + trailing NULL
   e->subjects[count] = s;
   e->subjects[count+1] = NULL;
 }
 
-void lzg_log_free (LZGLog *log, LZGLogResetFlag reset)
+void prelog_log_free (PrelogLog *log, PrelogLogResetFlag reset)
 {
   if(!log)
     return;
@@ -269,17 +259,17 @@ void lzg_log_free (LZGLog *log, LZGLogResetFlag reset)
     /*typeof(close) *original_close;
     original_close = dlsym(RTLD_NEXT, "close");
     (*original_close) (log->write_fd);*/
-    if (reset == LZG_LOG_RESET_FORK)
-      gzclose_no_flush (log->write_zfd);
+    if (reset == PRELOG_LOG_RESET_FORK)
+      prelog_gzclose_no_flush (log->write_zfd);
     else
-      gzclose_w (log->write_zfd);
+      prelog_gzclose_w (log->write_zfd);
   }
   
   free (log);
   log = NULL;
 }
 
-static void _mkdir (const char *dir)
+static void prelog_mkdir (const char *dir)
 {
   typeof(mkdir) *original_mkdir;
   original_mkdir = dlsym(RTLD_NEXT, "mkdir");
@@ -305,7 +295,7 @@ static void _mkdir (const char *dir)
   (*original_mkdir)(tmp, S_IRWXU);
 }
 
-int lzg_log_allowed_to_log ()
+int prelog_log_allowed_to_log ()
 {
   typeof(access) *original_access;
   original_access = dlsym(RTLD_NEXT, "access");
@@ -315,10 +305,10 @@ int lzg_log_allowed_to_log ()
     return 0;
 
   int accessed = -1;
-  size_t len = strlen(home) + 1 + strlen(LZG_TARGET_DIR) + 1 + strlen(LZG_LOG_FORBIDDEN) + 1;
+  size_t len = strlen(home) + 1 + strlen(PRELOG_TARGET_DIR) + 1 + strlen(PRELOG_LOG_FORBIDDEN) + 1;
   char *full_path = malloc (sizeof (char) * len);
   if (full_path) {
-    snprintf (full_path, len, "%s/%s/%s", home, LZG_TARGET_DIR, LZG_LOG_FORBIDDEN);
+    snprintf (full_path, len, "%s/%s/%s", home, PRELOG_TARGET_DIR, PRELOG_LOG_FORBIDDEN);
     accessed = (*original_access) (full_path, F_OK);
     free (full_path);
   }
@@ -326,14 +316,14 @@ int lzg_log_allowed_to_log ()
   if (accessed == 0)
     return 0;
 
-  char *name = _zg_get_actor_from_pid (getpid());
+  char *name = prelog_get_actor_from_pid (getpid());
   if (!name)
     return 0;
 
-  len = strlen(home) + 1 + strlen(LZG_TARGET_DIR) + 1 + strlen(name) + 6;
+  len = strlen(home) + 1 + strlen(PRELOG_TARGET_DIR) + 1 + strlen(name) + 6;
   full_path = malloc (sizeof (char) * len);
   if (full_path) {
-    snprintf (full_path, len, "%s/%s/%s.lock", home, LZG_TARGET_DIR, name);
+    snprintf (full_path, len, "%s/%s/%s.lock", home, PRELOG_TARGET_DIR, name);
     accessed = (*original_access) (full_path, F_OK);
     free (full_path);
     free (name);
@@ -342,11 +332,11 @@ int lzg_log_allowed_to_log ()
   return accessed;
 }
 
-void lzg_log_log_process_data (LZGLog *log)
+void prelog_log_log_process_data (PrelogLog *log)
 {
-  if(log->write_zfd != NULL && lzg_log_allowed_to_log()) {
+  if(log->write_zfd != NULL && prelog_log_allowed_to_log()) {
     pid_t pid = getpid();
-    char *actor = _zg_get_actor_from_pid (pid);
+    char *actor = prelog_get_actor_from_pid (pid);
     if (!actor)
       return;
 
@@ -368,20 +358,20 @@ void lzg_log_log_process_data (LZGLog *log)
   }
 }
 
-static void lzg_log_shutdown()
+static void prelog_log_shutdown()
 {
-  lzg_log_get_default(LZG_LOG_RESET_SHUTDOWN);
+  prelog_log_get_default(PRELOG_LOG_RESET_SHUTDOWN);
 }
 
-LZGLog *lzg_log_get_default (LZGLogResetFlag reset)
+PrelogLog *prelog_log_get_default (PrelogLogResetFlag reset)
 {
-  static LZGLog *log = NULL;
+  static PrelogLog *log = NULL;
   
-  if (reset != LZG_LOG_DONT_RESET) {
-    lzg_log_free (log, reset);
+  if (reset != PRELOG_LOG_DONT_RESET) {
+    prelog_log_free (log, reset);
     log = NULL;
 
-    if (reset == LZG_LOG_RESET_SHUTDOWN)
+    if (reset == PRELOG_LOG_RESET_SHUTDOWN)
       return NULL;
   }
 
@@ -389,7 +379,7 @@ LZGLog *lzg_log_get_default (LZGLogResetFlag reset)
     return NULL;
   
   if (!log) {
-    log = malloc(sizeof(LZGLog));
+    log = malloc(sizeof(PrelogLog));
     if(!log)
         return NULL;
     //log->write_fd = -1;
@@ -399,21 +389,21 @@ LZGLog *lzg_log_get_default (LZGLogResetFlag reset)
     const char *env = getenv("HOME");
     if (env) {
     
-      size_t elen = strlen (env) + 1 + strlen (LZG_TARGET_DIR) + 1;
+      size_t elen = strlen (env) + 1 + strlen (PRELOG_TARGET_DIR) + 1;
       char *epath = malloc (sizeof (char) * elen);
       if (!epath) {
         free(log);
         log = NULL;
         return NULL;
       }
-      snprintf (epath, elen, "%s/%s", env, LZG_TARGET_DIR);
+      snprintf (epath, elen, "%s/%s", env, PRELOG_TARGET_DIR);
       typeof(opendir) *original_opendir;
       original_opendir = dlsym(RTLD_NEXT, "opendir");
       
       DIR *exists = (*original_opendir) (epath);
 
       if (!exists) {
-        _mkdir (epath);
+        prelog_mkdir (epath);
       } else {
         typeof(closedir) *original_closedir;
         original_closedir = dlsym(RTLD_NEXT, "closedir");
@@ -428,7 +418,7 @@ LZGLog *lzg_log_get_default (LZGLogResetFlag reset)
       if (!strftime(date, sizeof(date), "%Y-%m-%d_%H%M%S", &ttm))
         date[0] = '\0';
 
-      size_t len = strlen (env) + 1/*/*/ + strlen (LZG_TARGET_DIR) + 1/*/*/ + strnlen(date, 100) + 1/*_*/ + 24/*pid*/ + 5/*.log+\0*/ + 3/*.gz*/;
+      size_t len = strlen (env) + 1/*/*/ + strlen (PRELOG_TARGET_DIR) + 1/*/*/ + strnlen(date, 100) + 1/*_*/ + 24/*pid*/ + 5/*.log+\0*/ + 3/*.gz*/;
       char *path = malloc (sizeof (char) * len);
       if (!path) {
         free(log);
@@ -436,20 +426,20 @@ LZGLog *lzg_log_get_default (LZGLogResetFlag reset)
         return NULL;
       }
       
-      //snprintf (path, len, "%s/%s/%s_%d.log", env, LZG_TARGET_DIR, date, getpid());
+      //snprintf (path, len, "%s/%s/%s_%d.log", env, PRELOG_TARGET_DIR, date, getpid());
       //typeof(open) *original_open;
       //original_open = dlsym(RTLD_NEXT, "open");
       //log->write_fd = (*original_open) (path, O_WRONLY | O_CREAT | O_APPEND, 00666);
 
-      snprintf (path, len, "%s/%s/%s_%d.log.gz", env, LZG_TARGET_DIR, date, getpid());
-      log->write_zfd = gzopen(path, "a");
+      snprintf (path, len, "%s/%s/%s_%d.log.gz", env, PRELOG_TARGET_DIR, date, getpid());
+      log->write_zfd = prelog_gzopen(path, "a");
       free (path);
 
-      lzg_log_log_process_data(log);
+      prelog_log_log_process_data(log);
 
-      if (!_lzg_exit_registered) {
-        _lzg_exit_registered = 1;
-        atexit(lzg_log_shutdown);
+      if (!_prelog_exit_registered) {
+        _prelog_exit_registered = 1;
+        atexit(prelog_log_shutdown);
       }
     }
   }
@@ -457,7 +447,7 @@ LZGLog *lzg_log_get_default (LZGLogResetFlag reset)
   return log;
 }
 
-void lzg_log_insert_event (LZGLog *log, LZGEvent *event)
+void prelog_log_insert_event (PrelogLog *log, PrelogEvent *event)
 {
   if(!log || !event)
     return;
@@ -480,7 +470,7 @@ void lzg_log_insert_event (LZGLog *log, LZGEvent *event)
 
   int i=0;
   while (event->subjects && event->subjects[i]) {
-    LZGSubject *s = event->subjects[i];
+    PrelogSubject *s = event->subjects[i];
 
     char *old = strdup(msg);
     size_t slen = strlen(s->uri) + (s->origin ? strlen(s->origin):0) + (s->text ? strlen(s->text):0) + 200;
@@ -495,11 +485,11 @@ void lzg_log_insert_event (LZGLog *log, LZGEvent *event)
     ++i;
   }
 
-  if(log->write_zfd != NULL && lzg_log_allowed_to_log()) {
+  if(log->write_zfd != NULL && prelog_log_allowed_to_log()) {
     //write(log->write_fd, msg, strlen(msg));
     gzwrite(log->write_zfd, msg, strlen(msg));
   }
   
   free(msg);
-  lzg_event_free (event);
+  prelog_event_free (event);
 }

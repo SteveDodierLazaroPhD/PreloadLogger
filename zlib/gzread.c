@@ -555,7 +555,7 @@ int ZEXPORT gzdirect(file)
     state = (gz_statep)file;
 
     /* if the state is not known, but we can find out, then do so (this is
-       mainly for right after a gzopen() or gzdopen()) */
+       mainly for right after a prelog_gzopen() or gzdopen()) */
     if (state->mode == GZ_READ && state->how == LOOK && state->x.have == 0)
         (void)gz_look(state);
 
@@ -564,7 +564,7 @@ int ZEXPORT gzdirect(file)
 }
 
 /* -- see zlib.h -- */
-int ZEXPORT gzclose_r(file)
+int ZEXPORT prelog_gzclose_r(file)
     gzFile file;
 {
     int ret, err;

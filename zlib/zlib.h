@@ -1224,8 +1224,8 @@ ZEXTERN int ZEXPORT uncompress OF((Bytef *dest,   uLongf *destLen,
 
 typedef struct gzFile_s *gzFile;    /* semi-opaque gzip file descriptor */
 
+ZEXTERN gzFile ZEXPORT prelog_gzopen OF((const char *path, const char *mode));
 /*
-ZEXTERN gzFile ZEXPORT gzopen OF((const char *path, const char *mode));
 
      Opens a gzip (.gz) file for reading or writing.  The mode parameter is as
    in fopen ("rb" or "wb") but can also include a compression level ("wb9") or
@@ -1244,21 +1244,21 @@ ZEXTERN gzFile ZEXPORT gzopen OF((const char *path, const char *mode));
    reading or writing will set the flag to close the file on an execve() call.
 
      These functions, as well as gzip, will read and decode a sequence of gzip
-   streams in a file.  The append function of gzopen() can be used to create
+   streams in a file.  The append function of prelog_gzopen() can be used to create
    such a file.  (Also see gzflush() for another way to do this.)  When
-   appending, gzopen does not test whether the file begins with a gzip stream,
-   nor does it look for the end of the gzip streams to begin appending.  gzopen
+   appending, prelog_gzopen does not test whether the file begins with a gzip stream,
+   nor does it look for the end of the gzip streams to begin appending.  prelog_gzopen
    will simply append a gzip stream to the existing file.
 
-     gzopen can be used to read a file which is not in gzip format; in this
+     prelog_gzopen can be used to read a file which is not in gzip format; in this
    case gzread will directly read from the file without decompression.  When
    reading, this will be detected automatically by looking for the magic two-
    byte gzip header.
 
-     gzopen returns NULL if the file could not be opened, if there was
+     prelog_gzopen returns NULL if the file could not be opened, if there was
    insufficient memory to allocate the gzFile state, or if an invalid mode was
    specified (an 'r', 'w', or 'a' was not provided, or '+' was provided).
-   errno can be checked to determine if the reason gzopen failed was that the
+   errno can be checked to determine if the reason prelog_gzopen failed was that the
    file could not be opened.
 */
 
@@ -1266,7 +1266,7 @@ ZEXTERN gzFile ZEXPORT gzdopen OF((int fd, const char *mode));
 /*
      gzdopen associates a gzFile with the file descriptor fd.  File descriptors
    are obtained from calls like open, dup, creat, pipe or fileno (if the file
-   has been previously opened with fopen).  The mode parameter is as in gzopen.
+   has been previously opened with fopen).  The mode parameter is as in prelog_gzopen.
 
      The next call of gzclose on the returned gzFile will also close the file
    descriptor fd, just like fclose(fdopen(fd, mode)) closes the file descriptor
@@ -1289,7 +1289,7 @@ ZEXTERN int ZEXPORT gzbuffer OF((gzFile file, unsigned size));
 /*
      Set the internal buffer size used by this library's functions.  The
    default buffer size is 8192 bytes.  This function must be called after
-   gzopen() or gzdopen(), and before any other calls that read or write the
+   prelog_gzopen() or gzdopen(), and before any other calls that read or write the
    file.  The buffer memory allocation is always deferred to the first read or
    write.  Two buffers are allocated, either both of the specified size when
    writing, or one of the specified size and the other twice that size when
@@ -1404,7 +1404,7 @@ ZEXTERN int ZEXPORT gzungetc OF((int c, gzFile file));
    on the next read.  At least one character of push-back is allowed.
    gzungetc() returns the character pushed, or -1 on failure.  gzungetc() will
    fail if c is -1, and may fail if a character has been pushed but not read
-   yet.  If gzungetc is used immediately after gzopen or gzdopen, at least the
+   yet.  If gzungetc is used immediately after prelog_gzopen or gzdopen, at least the
    output buffer size of pushed characters is allowed.  (See gzbuffer above.)
    The pushed character will be discarded if the stream is repositioned with
    gzseek() or gzrewind().
@@ -1496,13 +1496,13 @@ ZEXTERN int ZEXPORT gzdirect OF((gzFile file));
      If the input file is empty, gzdirect() will return true, since the input
    does not contain a gzip stream.
 
-     If gzdirect() is used immediately after gzopen() or gzdopen() it will
+     If gzdirect() is used immediately after prelog_gzopen() or gzdopen() it will
    cause buffers to be allocated to allow reading the file to determine if it
    is a gzip file.  Therefore if gzbuffer() is used, it should be called before
    gzdirect().
 
      When writing, gzdirect() returns true (1) if transparent writing was
-   requested ("wT" for the gzopen() mode), or false (0) otherwise.  (Note:
+   requested ("wT" for the prelog_gzopen() mode), or false (0) otherwise.  (Note:
    gzdirect() is not needed when writing.  Transparent writing must be
    explicitly requested, so the application already knows the answer.  When
    linking statically, using gzdirect() will include all of the zlib code for
@@ -1522,11 +1522,11 @@ ZEXTERN int ZEXPORT    gzclose OF((gzFile file));
    last read ended in the middle of a gzip stream, or Z_OK on success.
 */
 
-ZEXTERN int ZEXPORT gzclose_r OF((gzFile file));
-ZEXTERN int ZEXPORT gzclose_w OF((gzFile file));
+ZEXTERN int ZEXPORT prelog_gzclose_r OF((gzFile file));
+ZEXTERN int ZEXPORT prelog_gzclose_w OF((gzFile file));
 /*
-     Same as gzclose(), but gzclose_r() is only for use when reading, and
-   gzclose_w() is only for use when writing or appending.  The advantage to
+     Same as gzclose(), but prelog_gzclose_r() is only for use when reading, and
+   prelog_gzclose_w() is only for use when writing or appending.  The advantage to
    using these instead of gzclose() is that they avoid linking in zlib
    compression or decompression code that is not used when only reading or only
    writing respectively.  If gzclose() is used, then both compression and
@@ -1534,9 +1534,9 @@ ZEXTERN int ZEXPORT gzclose_w OF((gzFile file));
    zlib library.
 */
 
-ZEXTERN int ZEXPORT gzclose_no_flush OF((gzFile file));
+ZEXTERN int ZEXPORT prelog_gzclose_no_flush OF((gzFile file));
 /*
-     Same as gzclose_w(), except that the remaining uncompressed data will not
+     Same as prelog_gzclose_w(), except that the remaining uncompressed data will not
    be flushed to the file. Useful for when you need to close a gzFile handle
    after a fork in only one of the resulting processes.
 */
@@ -1697,7 +1697,7 @@ ZEXTERN int ZEXPORT gzgetc_ OF((gzFile file));  /* backward compatibility */
  * without large file support, _LFS64_LARGEFILE must also be true
  */
 #ifdef Z_LARGE64
-   ZEXTERN gzFile ZEXPORT gzopen64 OF((const char *, const char *));
+   ZEXTERN gzFile ZEXPORT prelog_gzopen64 OF((const char *, const char *));
    ZEXTERN z_off64_t ZEXPORT gzseek64 OF((gzFile, z_off64_t, int));
    ZEXTERN z_off64_t ZEXPORT gztell64 OF((gzFile));
    ZEXTERN z_off64_t ZEXPORT gzoffset64 OF((gzFile));
@@ -1714,7 +1714,7 @@ ZEXTERN int ZEXPORT gzgetc_ OF((gzFile file));  /* backward compatibility */
 #    define z_adler32_combine z_adler32_combine64
 #    define z_crc32_combine z_crc32_combine64
 #  else
-#    define gzopen gzopen64
+#    define prelog_gzopen prelog_gzopen64
 #    define gzseek gzseek64
 #    define gztell gztell64
 #    define gzoffset gzoffset64
@@ -1722,7 +1722,7 @@ ZEXTERN int ZEXPORT gzgetc_ OF((gzFile file));  /* backward compatibility */
 #    define crc32_combine crc32_combine64
 #  endif
 #  ifndef Z_LARGE64
-     ZEXTERN gzFile ZEXPORT gzopen64 OF((const char *, const char *));
+     ZEXTERN gzFile ZEXPORT prelog_gzopen64 OF((const char *, const char *));
      ZEXTERN z_off_t ZEXPORT gzseek64 OF((gzFile, z_off_t, int));
      ZEXTERN z_off_t ZEXPORT gztell64 OF((gzFile));
      ZEXTERN z_off_t ZEXPORT gzoffset64 OF((gzFile));
@@ -1730,7 +1730,7 @@ ZEXTERN int ZEXPORT gzgetc_ OF((gzFile file));  /* backward compatibility */
      ZEXTERN uLong ZEXPORT crc32_combine64 OF((uLong, uLong, z_off_t));
 #  endif
 #else
-   ZEXTERN gzFile ZEXPORT gzopen OF((const char *, const char *));
+   ZEXTERN gzFile ZEXPORT prelog_gzopen OF((const char *, const char *));
    ZEXTERN z_off_t ZEXPORT gzseek OF((gzFile, z_off_t, int));
    ZEXTERN z_off_t ZEXPORT gztell OF((gzFile));
    ZEXTERN z_off_t ZEXPORT gzoffset OF((gzFile));
@@ -1758,7 +1758,7 @@ ZEXTERN int            ZEXPORT inflateUndermine OF((z_streamp, int));
 ZEXTERN int            ZEXPORT inflateResetKeep OF((z_streamp));
 ZEXTERN int            ZEXPORT deflateResetKeep OF((z_streamp));
 #if defined(_WIN32) && !defined(Z_SOLO)
-ZEXTERN gzFile         ZEXPORT gzopen_w OF((const wchar_t *path,
+ZEXTERN gzFile         ZEXPORT prelog_gzopen_w OF((const wchar_t *path,
                                             const char *mode));
 #endif
 #if defined(STDC) || defined(Z_HAVE_STDARG_H)
