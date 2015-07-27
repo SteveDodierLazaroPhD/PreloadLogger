@@ -13,7 +13,6 @@ test:
 	gcc test.c -g -O0 -o preload-logger-test -lrt
 
 clean:
-	unset LD_PRELOAD
 	rm *~ preload-logger-test lib.so -f
 
 install: lib
@@ -27,7 +26,6 @@ install: lib
 
 uninstall:
 #	sed -i '\@PreloadLogger.so@d' $(DESTDIR)/etc/security/pam_env.conf
-	unset LD_PRELOAD
 	rm $(DESTDIR)/usr/lib/libPreloadLogger.so -f
 	rm $(DESTDIR)/usr/lib/libPreloadLogger.so.0 -f
 	rm $(DESTDIR)/usr/lib/libPreloadLogger.so.0.9 -f
