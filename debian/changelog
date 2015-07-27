@@ -1,3 +1,9 @@
+preload-logger (0.12) trusty; urgency=medium
+
+  * Version bump
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Mon, 27 Jul 2015 21:27:38 +0100
+
 preload-logger (0.11-0ubuntu2) trusty; urgency=medium
 
   * Adding postinst and postrm scripts
