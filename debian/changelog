@@ -1,3 +1,9 @@
+preload-logger (0.16-1) vivid; urgency=medium
+
+  * New approach to symlinking in Makefile
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Sat, 05 Sep 2015 16:14:45 +0100
+
 preload-logger (0.14-1) vivid; urgency=medium
 
   * Fixing erroneous va_end in one of the FS functions
