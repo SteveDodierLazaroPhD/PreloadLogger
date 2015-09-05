@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: preload-logger
+Upstream-Name: libpreload-logger
 Source: https://launchpad.net/activityfinder
 
 Files: gslist.c, gslist.h

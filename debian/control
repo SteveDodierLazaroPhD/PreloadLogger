@@ -1,4 +1,4 @@
-Source: preload-logger
+Source: libpreload-logger
 Priority: optional
 Maintainer: Steve Dodier-Lazaro <sidnioulz@gmail.com>
 Build-Depends: debhelper (>= 9)
@@ -8,10 +8,17 @@ Homepage: https://launchpad.net/activityfinder
 Vcs-Bzr: http://code.launchpad.net/~ucl-cs-study-devs/activityfinder/PreloadLogger
 Vcs-Browser: https://code.launchpad.net/~ucl-cs-study-devs/activityfinder/PreloadLogger
 
-Package: preload-logger1
+Package: libpreload-logger1
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-modules
 Description: Library to log filesystem and IPC system calls in userland processes
  Library to log filesystem and IPC system calls in userland processes. Uses
  PAM env to inject the library into all processes, and creates files into the
  user's Zeitgeist directory.
+
+Package: libpreload-logger-dev
+Architecture: any
+Section: libdevel
+Depends: libpreload-logger1 (= ${binary:Version}), ${misc:Depends}
+Description: Development files for libpreload-logger1
+ This package contains the headers for libpreload-logger1.
