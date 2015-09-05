@@ -261,7 +261,6 @@ int open64 (const char *file, int oflag, ...)
   int ret = (*original_open)(file, oflag, momo);
   int saved_errno = errno;
    prelog_open(ret, OPEN64_SCI, O_CREAT & oflag, -1, file, oflag | O_LARGEFILE);
-  va_end(list);
   errno = saved_errno;
   return ret;
 }
