@@ -1,4 +1,4 @@
-libpreload-logger (0.23) trusty; urgency=medium
+libpreload-logger (0.24) vivid; urgency=medium
 
   * Fixing a missing dir for the binary package
   * Fixing permissions on chromium-browser script
