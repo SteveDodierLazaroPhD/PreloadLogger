@@ -20,6 +20,8 @@ clean:
 install: lib
 	mkdir $(DESTDIR)/usr/lib/ -p
 	cp -nd libPreloadLogger.so* $(DESTDIR)/usr/lib/
+	mkdir $(DESTDIR)/usr/local/bin/ -p
+	cp -nd data/chromium-browser $(DESTDIR)/usr/local/bin/
 	mkdir $(DESTDIR)/etc/security/ -p
 	#echo "LD_PRELOAD      DEFAULT=\"$(DESTDIR)/usr/lib/libPreloadLogger.so\"" >> $(DESTDIR)/etc/security/pam_env.conf
 
