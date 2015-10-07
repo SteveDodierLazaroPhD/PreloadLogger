@@ -85,8 +85,8 @@ int main(void)
     link("/home/study/Downloads", "/tmp/dl");
     link("lib.so", "/tmp/dl");
 
-    FILE *gkldfjg = fopen("lib.so", "r");
-    FILE *two = freopen("lib.so", "a+", gkldfjg);
+    FILE *gkldfjg = fopen("test.c", "r");
+    FILE *two = freopen("test.c", "a+", gkldfjg);
 
 
     int ngkdjpg = open("/tmp", O_RDONLY);
