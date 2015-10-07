@@ -1,0 +1,4 @@
+#!/bin/sh
+unset LD_PRELOAD
+/usr/bin/chromium-browser
+exit

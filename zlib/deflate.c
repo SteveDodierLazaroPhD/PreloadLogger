@@ -1754,7 +1754,9 @@ local block_state deflate_slow(s, flush)
          */
         hash_head = NIL;
         if (s->lookahead >= MIN_MATCH) {
-            INSERT_STRING(s, s->strstart, hash_head);
+            s->ins_h = (((s->ins_h)<<s->hash_shift) ^ (s->window[(s->strstart) + (MIN_MATCH-1)])) & s->hash_mask;
+            hash_head = s->prev[(s->strstart) & s->w_mask] = s->head[s->ins_h];
+            s->head[s->ins_h] = (Pos)(s->strstart);
         }
 
         /* Find the longest match, discarding those <= prev_length.

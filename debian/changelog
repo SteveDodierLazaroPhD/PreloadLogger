@@ -1,3 +1,10 @@
+libpreload-logger (0.20) vivid; urgency=medium
+
+  * Fixing test.c
+  * Disable LD_PRELOAD for chromium-browser because of interferences
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Wed, 07 Oct 2015 13:30:56 +0100
+
 libpreload-logger (0.18) vivid; urgency=medium
 
   * Fixing control file to indicate presence of a dev package

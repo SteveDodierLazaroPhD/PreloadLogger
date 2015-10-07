@@ -34,6 +34,35 @@
 
 static int _prelog_exit_registered = 0;
 
+char *__pl_strndup (const char *s, size_t n)
+{
+  if (!s)
+    return NULL;
+
+  size_t len = strnlen (s, n);
+  char *new = (char *) __libc_malloc (len + 1);
+
+  if (new == NULL)
+    return NULL;
+
+  new[len] = '\0';
+  return (char *) memcpy (new, s, len);
+}
+
+char *__pl_strdup (const char *s)
+{
+  if (!s)
+    return NULL;
+
+  size_t len = strlen (s) + 1;
+  void *new = __libc_malloc (len);
+
+  if (new == NULL)
+    return NULL;
+
+  return (char *) memcpy (new, s, len);
+}
+
 char *prelog_get_actor_from_pid (pid_t pid)
 {
   static char *cached = NULL;
@@ -41,13 +70,13 @@ char *prelog_get_actor_from_pid (pid_t pid)
   
   if (cached_pid && cached_pid != pid) {
     if (cached) {
-      free (cached);
+      __libc_free (cached);
       cached = NULL;
     }
   }
 
   if (cached) {
-    return strdup (cached);
+    return __pl_strdup (cached);
   }
 
   char         *link_file     = NULL;
@@ -59,17 +88,17 @@ char *prelog_get_actor_from_pid (pid_t pid)
 
   if (pid <= 0)
   {
-      cached = strdup ("unknown");
-      return strdup (cached);
+      cached = __pl_strdup ("unknown");
+      return __pl_strdup (cached);
   }
 
   size_t len = strlen ("/proc//exe") + 100 + 1; //100 is much more than current pid_t's longest digit representation
-  link_file = malloc (sizeof (char) * len);
+  link_file = __libc_malloc (sizeof (char) * len);
   snprintf (link_file, len, "/proc/%d/exe", pid);
   if (link_file == NULL)
   {
-      cached = strdup ("unknown");
-      return strdup (cached);
+      cached = __pl_strdup ("unknown");
+      return __pl_strdup (cached);
   }
 
   // It is impossible to obtain the size of /proc link targets as /proc is
@@ -82,29 +111,29 @@ char *prelog_get_actor_from_pid (pid_t pid)
   {
     link_len += NAME_MAX;
 
-    free (link_target);
-    link_target = malloc (link_len * sizeof (char));
+    __libc_free (link_target);
+    link_target = __libc_malloc (link_len * sizeof (char));
 
     if (link_target == NULL)
     {
-      free (link_file);
-      free (link_target);
-      cached = strdup ("unknown");
-      return strdup (cached);
+      __libc_free (link_file);
+      __libc_free (link_target);
+      cached = __pl_strdup ("unknown");
+      return __pl_strdup (cached);
     }
 
     read_len= readlink (link_file, link_target, link_len);
 
     if (read_len < 0)
     {
-      free (link_file);
-      free (link_target);
-      cached = strdup ("unknown");
-      return strdup (cached);
+      __libc_free (link_file);
+      __libc_free (link_target);
+      cached = __pl_strdup ("unknown");
+      return __pl_strdup (cached);
     }
   }
 
-  free (link_file);
+  __libc_free (link_file);
 
   // readlink does not null-terminate the string
   link_target[read_len] = '\0';
@@ -113,28 +142,28 @@ char *prelog_get_actor_from_pid (pid_t pid)
 
   if(split_target == NULL)
   {
-    free (link_target);
-      cached = strdup ("unknown");
-      return strdup (cached);
+    __libc_free (link_target);
+      cached = __pl_strdup ("unknown");
+      return __pl_strdup (cached);
   }
 
   // Turn it into an arbitrary actor name
   size_t actor_len = strlen (split_target) + 1;
-  actor_name = malloc (sizeof (char) * actor_len);
+  actor_name = __libc_malloc (sizeof (char) * actor_len);
   snprintf (actor_name, actor_len, "%s", split_target+1);
-  free (link_target);
+  __libc_free (link_target);
 
   // Better safe than sorry
   if (!actor_name)
-    actor_name = strdup ("unknown");
+    actor_name = __pl_strdup ("unknown");
 
   cached = actor_name;
-  return strdup(actor_name);
+  return __pl_strdup(actor_name);
 }
 
 PrelogSubject *prelog_subject_new (void)
 {
-  PrelogSubject *s = malloc(sizeof(PrelogSubject));
+  PrelogSubject *s = __libc_malloc(sizeof(PrelogSubject));
 
   if(!s)
     return NULL;
@@ -152,11 +181,11 @@ void prelog_subject_free (PrelogSubject *s)
     return;
 
   if(s->uri)
-    free(s->uri);
+    __libc_free(s->uri);
   if(s->origin)
-    free(s->origin);
+    __libc_free(s->origin);
 
-  free(s);
+  __libc_free(s);
 }
 
 void prelog_subject_set_uri (PrelogSubject *s, const char *uri)
@@ -165,9 +194,9 @@ void prelog_subject_set_uri (PrelogSubject *s, const char *uri)
     return;
 
   if(s->uri)
-    free(s->uri);
+    __libc_free(s->uri);
   
-  s->uri = strndup (uri, 8192);
+  s->uri = __pl_strndup (uri, 8192);
 }
 
 void prelog_subject_set_origin (PrelogSubject *s, const char *origin)
@@ -176,9 +205,9 @@ void prelog_subject_set_origin (PrelogSubject *s, const char *origin)
     return;
 
   if(s->origin)
-    free(s->origin);
+    __libc_free(s->origin);
   
-  s->origin = strndup (origin, 8192);
+  s->origin = __pl_strndup (origin, 8192);
 }
 
 void prelog_subject_set_text (PrelogSubject *s, const char *text)
@@ -187,14 +216,14 @@ void prelog_subject_set_text (PrelogSubject *s, const char *text)
     return;
 
   if(s->text)
-    free(s->text);
+    __libc_free(s->text);
   
-  s->text = strndup (text, 8192);
+  s->text = __pl_strndup (text, 8192);
 }
 
 PrelogEvent *prelog_event_new (void)
 {
-  PrelogEvent *e = malloc(sizeof(PrelogEvent));
+  PrelogEvent *e = __libc_malloc(sizeof(PrelogEvent));
 
   if(!e)
     return NULL;
@@ -217,10 +246,10 @@ void prelog_event_free (PrelogEvent *e)
       prelog_subject_free(e->subjects[i]);
       ++i;
     }
-    free(e->subjects);
+    __libc_free(e->subjects);
   }
 
-  free(e);
+  __libc_free(e);
 }
 
 void prelog_event_set_interpretation (PrelogEvent *e, const char *interpretation)
@@ -228,7 +257,7 @@ void prelog_event_set_interpretation (PrelogEvent *e, const char *interpretation
   if(!e)
     return;
 
-  e->interpretation = strndup (interpretation, 8192);
+  e->interpretation = __pl_strndup (interpretation, 8192);
 }
 
 void prelog_event_add_subject (PrelogEvent *e, PrelogSubject *s)
@@ -265,7 +294,7 @@ void prelog_log_free (PrelogLog *log, PrelogLogResetFlag reset)
       prelog_gzclose_w (log->write_zfd);
   }
   
-  free (log);
+  __libc_free (log);
   log = NULL;
 }
 
@@ -306,11 +335,11 @@ int prelog_log_allowed_to_log ()
 
   int accessed = -1;
   size_t len = strlen(home) + 1 + strlen(PRELOG_TARGET_DIR) + 1 + strlen(PRELOG_LOG_FORBIDDEN) + 1;
-  char *full_path = malloc (sizeof (char) * len);
+  char *full_path = __libc_malloc (sizeof (char) * len);
   if (full_path) {
     snprintf (full_path, len, "%s/%s/%s", home, PRELOG_TARGET_DIR, PRELOG_LOG_FORBIDDEN);
     accessed = (*original_access) (full_path, F_OK);
-    free (full_path);
+    __libc_free (full_path);
   }
 
   if (accessed == 0)
@@ -321,12 +350,12 @@ int prelog_log_allowed_to_log ()
     return 0;
 
   len = strlen(home) + 1 + strlen(PRELOG_TARGET_DIR) + 1 + strlen(name) + 6;
-  full_path = malloc (sizeof (char) * len);
+  full_path = __libc_malloc (sizeof (char) * len);
   if (full_path) {
     snprintf (full_path, len, "%s/%s/%s.lock", home, PRELOG_TARGET_DIR, name);
     accessed = (*original_access) (full_path, F_OK);
-    free (full_path);
-    free (name);
+    __libc_free (full_path);
+    __libc_free (name);
   }
 
   return accessed;
@@ -344,17 +373,17 @@ void prelog_log_log_process_data (PrelogLog *log)
     size_t msg_len = 0;
     
     msg_len = strlen(actor) + 12 /* pid */ + 4 /* @ : \n \0 */;
-    msg = malloc(sizeof (char) * msg_len);
+    msg = __libc_malloc(sizeof (char) * msg_len);
     if (!msg) {
-      free (actor);
+      __libc_free (actor);
       return;
     }
 
     snprintf(msg, msg_len, "@%s|%d\n", actor, pid);
     //write(log->write_fd, msg, strlen(msg));
     gzwrite(log->write_zfd, msg, strlen(msg));
-    free(actor);
-    free(msg);
+    __libc_free(actor);
+    __libc_free(msg);
   }
 }
 
@@ -379,7 +408,7 @@ PrelogLog *prelog_log_get_default (PrelogLogResetFlag reset)
     return NULL;
   
   if (!log) {
-    log = malloc(sizeof(PrelogLog));
+    log = __libc_malloc(sizeof(PrelogLog));
     if(!log)
         return NULL;
     //log->write_fd = -1;
@@ -388,11 +417,10 @@ PrelogLog *prelog_log_get_default (PrelogLogResetFlag reset)
     /* Try to init write_fd / write_zfd */
     const char *env = getenv("HOME");
     if (env) {
-    
       size_t elen = strlen (env) + 1 + strlen (PRELOG_TARGET_DIR) + 1;
-      char *epath = malloc (sizeof (char) * elen);
+      char *epath = __libc_malloc (sizeof (char) * elen);
       if (!epath) {
-        free(log);
+        __libc_free(log);
         log = NULL;
         return NULL;
       }
@@ -409,7 +437,7 @@ PrelogLog *prelog_log_get_default (PrelogLogResetFlag reset)
         original_closedir = dlsym(RTLD_NEXT, "closedir");
         (*original_closedir) (exists);
       }
-      free (epath);
+      __libc_free (epath);
 
       time_t t = time(NULL);
       struct tm ttm;
@@ -419,9 +447,9 @@ PrelogLog *prelog_log_get_default (PrelogLogResetFlag reset)
         date[0] = '\0';
 
       size_t len = strlen (env) + 1/*/*/ + strlen (PRELOG_TARGET_DIR) + 1/*/*/ + strnlen(date, 100) + 1/*_*/ + 24/*pid*/ + 5/*.log+\0*/ + 3/*.gz*/;
-      char *path = malloc (sizeof (char) * len);
+      char *path = __libc_malloc (sizeof (char) * len);
       if (!path) {
-        free(log);
+        __libc_free(log);
         log = NULL;
         return NULL;
       }
@@ -433,7 +461,7 @@ PrelogLog *prelog_log_get_default (PrelogLogResetFlag reset)
 
       snprintf (path, len, "%s/%s/%s_%d.log.gz", env, PRELOG_TARGET_DIR, date, getpid());
       log->write_zfd = prelog_gzopen(path, "a");
-      free (path);
+      __libc_free (path);
 
       prelog_log_log_process_data(log);
 
@@ -462,7 +490,7 @@ void prelog_log_insert_event (PrelogLog *log, PrelogEvent *event)
   size_t msg_len = 0;
   
   msg_len = strlen(event->interpretation) + /* actually time_t is a long int so 12 would suffice */ + 24 /*timestamp*/ + 200 /* format string */;
-  msg = malloc(sizeof (char) * msg_len);
+  msg = __libc_malloc(sizeof (char) * msg_len);
   snprintf(msg, msg_len, "%li|%s%s",
                          event->timestamp,
                          event->interpretation,
@@ -472,7 +500,7 @@ void prelog_log_insert_event (PrelogLog *log, PrelogEvent *event)
   while (event->subjects && event->subjects[i]) {
     PrelogSubject *s = event->subjects[i];
 
-    char *old = strdup(msg);
+    char *old = __pl_strdup(msg);
     size_t slen = strlen(s->uri) + (s->origin ? strlen(s->origin):0) + (s->text ? strlen(s->text):0) + 200;
     msg = realloc (msg, strlen(old) + slen);
     snprintf(msg, strlen(old) + slen, "%s%s%s|%s|%s\n",
@@ -481,7 +509,7 @@ void prelog_log_insert_event (PrelogLog *log, PrelogEvent *event)
                                       s->uri,
                                       s->text,
                                       s->origin? s->origin:"");
-    free (old);
+    __libc_free (old);
     ++i;
   }
 
@@ -490,6 +518,6 @@ void prelog_log_insert_event (PrelogLog *log, PrelogEvent *event)
     gzwrite(log->write_zfd, msg, strlen(msg));
   }
   
-  free(msg);
+  __libc_free(msg);
   prelog_event_free (event);
 }
