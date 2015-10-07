@@ -1,4 +1,4 @@
-libpreload-logger (0.21) trusty; urgency=medium
+libpreload-logger (0.22) vivid; urgency=medium
 
   * Missing install rule on the binary lib package for the chromium script
 
