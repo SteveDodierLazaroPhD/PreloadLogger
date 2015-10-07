@@ -29,7 +29,7 @@ include /usr/share/dpkg/default.mk
 #	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)
 
 
-override dh_builddeb:
+override_dh_builddeb:
 	NO_PKG_MANGLE=1 dh_builddeb
 
 override_dh_usrlocal:
