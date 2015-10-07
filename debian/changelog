@@ -1,3 +1,9 @@
+libpreload-logger (0.25) trusty; urgency=medium
+
+  * Trying to remove some sanity checks from the LP builder...
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Wed, 07 Oct 2015 22:14:20 +0100
+
 libpreload-logger (0.24) vivid; urgency=medium
 
   * Fixing a missing dir for the binary package

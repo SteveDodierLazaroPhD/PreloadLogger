@@ -1,4 +1,4 @@
 src/libPreloadLogger.so usr/lib/libPreloadLogger.so
 src/libPreloadLogger.so.0 usr/lib/libPreloadLogger.so.0
 src/libPreloadLogger.so.0.9 usr/lib/libPreloadLogger.so.0.9
-data/chromium-browser usr/local/bin/chromium-browser
+data/ usr/local/bin/
