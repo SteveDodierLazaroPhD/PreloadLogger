@@ -1,6 +1,7 @@
 libpreload-logger (0.23) trusty; urgency=medium
 
   * Fixing a missing dir for the binary package
+  * Fixing permissions on chromium-browser script
 
  -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Wed, 07 Oct 2015 16:18:00 +0100
 
