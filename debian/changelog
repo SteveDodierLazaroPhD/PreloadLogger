@@ -1,4 +1,4 @@
-libpreload-logger (0.29) trusty; urgency=medium
+libpreload-logger (0.30) vivid; urgency=medium
 
   * Removing glibc dep as the glibc package is actually libc6...
 
