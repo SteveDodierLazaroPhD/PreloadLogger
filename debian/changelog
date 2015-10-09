@@ -1,3 +1,9 @@
+libpreload-logger (0.29) trusty; urgency=medium
+
+  * Removing glibc dep as the glibc package is actually libc6...
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Fri, 09 Oct 2015 14:33:48 +0100
+
 libpreload-logger (0.28) vivid; urgency=medium
 
   * Trying to remove some sanity checks from the LP builder...

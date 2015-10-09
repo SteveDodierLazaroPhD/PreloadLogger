@@ -10,7 +10,7 @@ Vcs-Browser: https://code.launchpad.net/~ucl-cs-study-devs/activityfinder/Preloa
 
 Package: libpreload-logger1
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-modules, glibc
+Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-modules, libc6
 Description: Library to log filesystem and IPC system calls in userland processes
  Library to log filesystem and IPC system calls in userland processes. Uses
  PAM env to inject the library into all processes, and creates files into the
