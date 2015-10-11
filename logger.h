@@ -22,27 +22,6 @@
 #include <stdio.h>
 #include "zlib/zlib.h"
 
-#ifndef __GLIBC__
-# error PreloadLogger works only with the glibc, because it needs to be able to perform direct calls to syscalls via __libc_*
-#endif
-
-extern int   __open(const char *pathname, int flags, ...);
-extern int   __open64(const char *pathname, int flags, ...);
-extern int   __close(int fd);
-
-extern void* __libc_malloc(size_t size);
-extern void  __libc_free(void* ptr);
-extern void* __libc_realloc(void* ptr, size_t size);
-extern void* __libc_calloc(size_t n, size_t size);
-extern void  __libc_cfree(void* ptr);
-extern void* __libc_memcpy(void *dest, const void *src, size_t n);
-extern void* __libc_memalign(size_t align, size_t s);
-extern void* __libc_valloc(size_t size);
-extern char* __libc_strdup(const char *s);
-extern char* __libc_strndup(const char *s, size_t n);
-extern void* __libc_pvalloc(size_t size);
-extern int   __posix_memalign(void** r, size_t a, size_t s);
-
 typedef enum {
   PRELOG_LOG_DONT_RESET = 0,
   PRELOG_LOG_RESET_SHUTDOWN = 1,
@@ -95,9 +74,6 @@ typedef struct _PrelogLog {
 #define PRELOG_TARGET_FILE   "syscalls.log"
 #define PRELOG_LOG_FORBIDDEN "LOGGING-FORBIDDEN.lock"
 #define PRELOG_TARGET_PATH    ".local/share/zeitgeist/syscalls.log"
-
-char *__pl_strdup (const char *s);
-char *__pl_strndup (const char *s, size_t n);
 
 char *prelog_get_actor_from_pid (pid_t pid);
 

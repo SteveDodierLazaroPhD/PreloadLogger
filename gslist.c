@@ -25,12 +25,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "gslist.h"
-#include "logger.h"
 
 PrelogSList*
 prelog_slist_alloc (void)
 {
-  return __libc_malloc (sizeof (PrelogSList));
+  return malloc (sizeof (PrelogSList));
 }
 
 void
@@ -38,14 +37,14 @@ prelog_slist_free (PrelogSList *list)
 {
   if (list) {
     prelog_slist_free (list->next);
-    __libc_free (list);
+    free (list);
   }
 }
 
 void
 prelog_slist_free_1 (PrelogSList *list)
 {
-  __libc_free (list);
+  free (list);
 }
 
 
@@ -64,7 +63,7 @@ prelog_slist_append (PrelogSList *list,
   PrelogSList *new_list;
   PrelogSList *last;
 
-  new_list = __libc_malloc (sizeof (PrelogSList));
+  new_list = malloc (sizeof (PrelogSList));
   new_list->data = data;
   new_list->next = NULL;
 
@@ -86,7 +85,7 @@ prelog_slist_prepend (PrelogSList *list,
 {
   PrelogSList *new_list;
 
-  new_list = __libc_malloc (sizeof (PrelogSList));
+  new_list = malloc (sizeof (PrelogSList));
   new_list->data = data;
   new_list->next = list;
 
@@ -107,7 +106,7 @@ prelog_slist_insert (PrelogSList *list,
   else if (position == 0)
     return prelog_slist_prepend (list, data);
 
-  new_list = __libc_malloc (sizeof (PrelogSList));
+  new_list = malloc (sizeof (PrelogSList));
   new_list->data = data;
 
   if (!list)
@@ -138,7 +137,7 @@ prelog_slist_insert_before (PrelogSList *slist,
 {
   if (!slist)
     {
-      slist = __libc_malloc (sizeof (PrelogSList));
+      slist = malloc (sizeof (PrelogSList));
       slist->data = data;
       slist->next = NULL;
       return slist;
@@ -152,7 +151,7 @@ prelog_slist_insert_before (PrelogSList *slist,
           break;
       if (!last)
         {
-          node = __libc_malloc (sizeof (PrelogSList));
+          node = malloc (sizeof (PrelogSList));
           node->data = data;
           node->next = slist;
 
@@ -160,7 +159,7 @@ prelog_slist_insert_before (PrelogSList *slist,
         }
       else
         {
-          node = __libc_malloc (sizeof (PrelogSList));
+          node = malloc (sizeof (PrelogSList));
           node->data = data;
           node->next = last->next;
           last->next = node;
@@ -283,7 +282,7 @@ prelog_slist_delete_link (PrelogSList *list,
                      PrelogSList *link_)
 {
   list = _prelog_slist_remove_link (list, link_);
-  __libc_free (link_);
+  free (link_);
 
   return list;
 }
@@ -303,7 +302,7 @@ prelog_slist_copy_deep (PrelogSList *list, PrelogCopyFunc func, void * user_data
     {
       PrelogSList *last;
 
-      new_list = __libc_malloc (sizeof (PrelogSList));
+      new_list = malloc (sizeof (PrelogSList));
       if (func)
         new_list->data = func (list->data, user_data);
       else
@@ -312,7 +311,7 @@ prelog_slist_copy_deep (PrelogSList *list, PrelogCopyFunc func, void * user_data
       list = list->next;
       while (list)
         {
-          last->next = __libc_malloc (sizeof (PrelogSList));
+          last->next = malloc (sizeof (PrelogSList));
           last = last->next;
           if (func)
             last->data = func (list->data, user_data);
@@ -479,7 +478,7 @@ prelog_slist_insert_sorted_real (PrelogSList *list,
 
   if (!list)
     {
-      new_list = __libc_malloc (sizeof (PrelogSList));
+      new_list = malloc (sizeof (PrelogSList));
       new_list->data = data;
       new_list->next = NULL;
       return new_list;
@@ -495,7 +494,7 @@ prelog_slist_insert_sorted_real (PrelogSList *list,
       cmp = ((PrelogCompareDataFunc) func) (data, tmp_list->data, user_data);
     }
 
-  new_list = __libc_malloc (sizeof (PrelogSList));
+  new_list = malloc (sizeof (PrelogSList));
   new_list->data = data;
 
   if ((!tmp_list->next) && (cmp > 0))
