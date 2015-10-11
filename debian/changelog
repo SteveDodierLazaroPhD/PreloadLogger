@@ -1,4 +1,4 @@
-libpreload-logger (0.31) trusty; urgency=medium
+libpreload-logger (0.32) vivid; urgency=medium
 
   * Removing references to libc malloc that were accidentally added
 
