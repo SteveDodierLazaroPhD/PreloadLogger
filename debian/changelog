@@ -1,4 +1,4 @@
-libpreload-logger (0.33) trusty; urgency=medium
+libpreload-logger (0.34) vivid; urgency=medium
 
   * Now logging the cmdline parameters of launched apps
 
