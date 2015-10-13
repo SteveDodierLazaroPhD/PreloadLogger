@@ -75,6 +75,8 @@ typedef struct _PrelogLog {
 #define PRELOG_LOG_FORBIDDEN "LOGGING-FORBIDDEN.lock"
 #define PRELOG_TARGET_PATH    ".local/share/zeitgeist/syscalls.log"
 
+#define PRELOG_CMDLINE_LEN   32000
+
 char *prelog_get_actor_from_pid (pid_t pid);
 
 PrelogSubject *prelog_subject_new (void);

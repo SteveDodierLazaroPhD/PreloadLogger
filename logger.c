@@ -59,7 +59,7 @@ char *prelog_get_actor_from_pid (pid_t pid)
 
   if (pid <= 0)
   {
-      cached = strdup ("unknown");
+      cached = strdup ("unknown (no pid)");
       return strdup (cached);
   }
 
@@ -68,7 +68,7 @@ char *prelog_get_actor_from_pid (pid_t pid)
   snprintf (link_file, len, "/proc/%d/exe", pid);
   if (link_file == NULL)
   {
-      cached = strdup ("unknown");
+      cached = strdup ("unknown (no exe link)");
       return strdup (cached);
   }
 
@@ -89,7 +89,7 @@ char *prelog_get_actor_from_pid (pid_t pid)
     {
       free (link_file);
       free (link_target);
-      cached = strdup ("unknown");
+      cached = strdup ("unknown (could not allocate memory when reading exe link)");
       return strdup (cached);
     }
 
@@ -99,7 +99,7 @@ char *prelog_get_actor_from_pid (pid_t pid)
     {
       free (link_file);
       free (link_target);
-      cached = strdup ("unknown");
+      cached = strdup ("unknown (failed to read exe link)");
       return strdup (cached);
     }
   }
@@ -114,8 +114,8 @@ char *prelog_get_actor_from_pid (pid_t pid)
   if(split_target == NULL)
   {
     free (link_target);
-      cached = strdup ("unknown");
-      return strdup (cached);
+    cached = strdup ("unknown (could not get file base name from exe link)");
+    return strdup (cached);
   }
 
   // Turn it into an arbitrary actor name
@@ -130,6 +130,50 @@ char *prelog_get_actor_from_pid (pid_t pid)
 
   cached = actor_name;
   return strdup(actor_name);
+}
+
+char *prelog_get_cmdline_from_pid (pid_t pid)
+{
+  if (pid <= 0)
+  {
+      return strdup ("unknown (no pid)");
+  }
+
+  size_t len = strlen ("/proc//cmdline") + 100 + 1; //100 is much more than current pid_t's longest digit representation
+  char *cmd_path = malloc (sizeof (char) * len);
+  snprintf (cmd_path, len, "/proc/%d/cmdline", pid);
+  if (cmd_path == NULL)
+      return strdup ("unknown (could not file command line file)");
+
+  typeof(fopen) *original_fopen;
+  original_fopen = dlsym(RTLD_NEXT, "fopen");
+  FILE *cmd_f = (*original_fopen) (cmd_path, "rb");
+  if (cmd_f == NULL)
+    return strdup ("unknown (could not open command line file)");
+
+  char *buffer = malloc (sizeof (char) * PRELOG_CMDLINE_LEN);
+  size_t read = 0, index = 0;
+  if (buffer)
+  {
+    read = fread (buffer, 1, PRELOG_CMDLINE_LEN - 1, cmd_f);
+  }
+
+  for(; index<read; ++index)
+    if (buffer[index] == '\0')
+      buffer[index] = ' ';
+  buffer[read] = '\0';
+
+  typeof(fclose) *original_fclose;
+  original_fclose = dlsym(RTLD_NEXT, "fclose");
+  (*original_fclose) (cmd_f);
+
+  if (!read)
+  {
+    free (buffer);
+    return strdup ("unknown (could not read command line file)");
+  }
+  else
+    return buffer;
 }
 
 PrelogSubject *prelog_subject_new (void)
@@ -339,21 +383,25 @@ void prelog_log_log_process_data (PrelogLog *log)
     char *actor = prelog_get_actor_from_pid (pid);
     if (!actor)
       return;
+    char *cmdline = prelog_get_cmdline_from_pid (pid);
 
     char *msg = NULL;
     size_t msg_len = 0;
     
-    msg_len = strlen(actor) + 12 /* pid */ + 4 /* @ : \n \0 */;
+    msg_len = strlen(actor) + (cmdline? strlen(cmdline) : 20) + 12 /* pid */ + 4 /* @ : \n \0 */;
     msg = malloc(sizeof (char) * msg_len);
     if (!msg) {
       free (actor);
+      free (cmdline);
       return;
     }
 
-    snprintf(msg, msg_len, "@%s|%d\n", actor, pid);
+    snprintf(msg, msg_len, "@%s|%d|%s\n", actor, pid, cmdline);
+    
     //write(log->write_fd, msg, strlen(msg));
     gzwrite(log->write_zfd, msg, strlen(msg));
     free(actor);
+    free (cmdline);
     free(msg);
   }
 }

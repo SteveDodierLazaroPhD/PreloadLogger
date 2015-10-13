@@ -1,3 +1,9 @@
+libpreload-logger (0.33) trusty; urgency=medium
+
+  * Now logging the cmdline parameters of launched apps
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Tue, 13 Oct 2015 16:43:06 +0100
+
 libpreload-logger (0.32) vivid; urgency=medium
 
   * Removing references to libc malloc that were accidentally added
