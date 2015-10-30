@@ -1,3 +1,9 @@
+libpreload-logger (0.35) trusty; urgency=medium
+
+  * Fixing make install rules
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Fri, 30 Oct 2015 14:55:34 +0000
+
 libpreload-logger (0.34) vivid; urgency=medium
 
   * Now logging the cmdline parameters of launched apps
