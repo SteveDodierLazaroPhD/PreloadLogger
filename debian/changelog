@@ -1,4 +1,4 @@
-libpreload-logger (0.36) trusty; urgency=medium
+libpreload-logger (0.38) vivid; urgency=medium
 
   * Fixing make install rules
 
