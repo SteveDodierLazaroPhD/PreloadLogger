@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -749,6 +750,17 @@ DIR *fdopendir(int fd)
 int shm_open(const char *name, int oflag, mode_t mode)
 {
   typeof(shm_open) *original_shm_open = dlsym(RTLD_NEXT, "shm_open");
+
+  if (!original_shm_open)
+    original_shm_open = dlsym(dlopen("librt.so", RTLD_NOW), "shm_open");
+
+  if (!original_shm_open)
+  {
+    fprintf(stderr, "PreloadLogger Error: no symbol could be found for function 'shm_open'. Your application is probably loading C symbols in a very peculiar way. Aborting call to shm_open...\n");
+    errno = EACCES;
+    return -1;
+  }
+
   int ret = (*original_shm_open)(name, oflag, mode);
   int saved_errno = errno;
 
@@ -776,7 +788,18 @@ int shm_open(const char *name, int oflag, mode_t mode)
 
 int shm_unlink(const char *name)
 {
- typeof(shm_unlink) *original_shm_unlink = dlsym(RTLD_NEXT, "shm_unlink");
+  typeof(shm_unlink) *original_shm_unlink = dlsym(RTLD_NEXT, "shm_unlink");
+
+  if (!original_shm_unlink)
+    original_shm_unlink = dlsym(dlopen("librt.so", RTLD_NOW), "shm_unlink");
+
+  if (!original_shm_unlink)
+  {
+    fprintf(stderr, "PreloadLogger Error: no symbol could be found for function 'shm_unlink'. Your application is probably loading C symbols in a very peculiar way. Aborting call to shm_unlink...\n");
+    errno = EACCES;
+    return -1;
+  }
+
   int ret = (*original_shm_unlink)(name);
   int saved_errno = errno;
 
