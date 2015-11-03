@@ -1,10 +1,10 @@
-libpreload-logger (0.39) trusty; urgency=medium
+libpreload-logger (0.40) vivid; urgency=medium
 
   * Multithread safety (mutexes on shared data structures and gz file)
 
  -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Tue, 03 Nov 2015 11:08:57 +0000
 
-libpreload-logger (0.37) trusty; urgency=medium
+libpreload-logger (0.38) vivid; urgency=medium
 
   * Fixing make install rules
 
