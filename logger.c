@@ -22,6 +22,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +34,7 @@
 #include "logger.h"
 
 static int _prelog_exit_registered = 0;
+static pthread_mutex_t _prelog_lock = PTHREAD_MUTEX_INITIALIZER;
 
 char *prelog_get_actor_from_pid (pid_t pid)
 {
@@ -505,7 +507,7 @@ void prelog_log_insert_event (PrelogLog *log, PrelogEvent *event)
     return;
   }
 
-
+  pthread_mutex_lock(&_prelog_lock);
   char *msg = NULL;
   size_t msg_len = 0;
   
@@ -540,4 +542,5 @@ void prelog_log_insert_event (PrelogLog *log, PrelogEvent *event)
   
   free(msg);
   prelog_event_free (event);
+  pthread_mutex_unlock(&_prelog_lock);
 }

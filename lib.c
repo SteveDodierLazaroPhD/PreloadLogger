@@ -23,6 +23,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,7 +41,8 @@
 PrelogSList *fds = NULL;
 PrelogSList *files = NULL;
 PrelogSList *dirs = NULL;
-PrelogSList *shms = NULL;
+
+static pthread_mutex_t _prelog_fd_lock = PTHREAD_MUTEX_INITIALIZER;
 
 //TODO dbus API?
 
@@ -232,7 +234,9 @@ void prelog_open (const int ret, const char *interpretation, int creates, int di
       prelog_log_event(open_txt, file, dirfd, interpretation);
       free (open_txt);
     }
+    pthread_mutex_lock(&_prelog_fd_lock);
     fds = prelog_slist_prepend(fds, PRELOG_INT_TO_POINTER(ret));
+    pthread_mutex_unlock(&_prelog_fd_lock);
   }
 }
 
@@ -312,6 +316,7 @@ int creat (const char *pathname, mode_t mode)
 
 void prelog_dup (const int ret, const char *interpretation, int oldfd, int newfd, mode_t mode)
 {
+  pthread_mutex_lock(&_prelog_fd_lock);
   if(prelog_slist_find(fds, PRELOG_INT_TO_POINTER(oldfd))) {
     char *error_str = NULL;//, error[1024];
     if (errno) {
@@ -330,6 +335,7 @@ void prelog_dup (const int ret, const char *interpretation, int oldfd, int newfd
     free (newpath);
     free (dup_txt);
   }
+  pthread_mutex_unlock(&_prelog_fd_lock);
 }
 
 int dup(int oldfd)
@@ -479,7 +485,9 @@ static void prelog_fopen(FILE *ret, const char *path, const char *mode, const ch
     char *open_txt = malloc (sizeof (char) * len);
     if (open_txt) {
       snprintf (open_txt, len, "FILE %p: with flag %d, %s", ret, flag, (ret? "e0":error_str));
+      pthread_mutex_lock(&_prelog_fd_lock);
       files = prelog_slist_prepend(files, ret);
+      pthread_mutex_unlock(&_prelog_fd_lock);
       prelog_log_event(open_txt, path, -1, interpretation);
       free (open_txt);
     }
@@ -511,7 +519,7 @@ FILE *fdopen(int fd, const char *mode)
   typeof(fdopen) *original_open = dlsym(RTLD_NEXT, "fdopen");
   FILE *ret = (*original_open)(fd, mode);
   int saved_errno = errno;
-
+  pthread_mutex_lock(&_prelog_fd_lock);
   if(prelog_slist_find(fds, PRELOG_INT_TO_POINTER(fd))) {
     char *error_str = NULL;//, error[1024];
     if (errno) {
@@ -531,13 +539,16 @@ FILE *fdopen(int fd, const char *mode)
       snprintf (old_fd, plen, "fd: %d", fd);
       snprintf (file, plen, "FILE %p", ret);
       snprintf (open_txt, len, "with flag %d, %s", flag, (ret? "e0":error_str));
+      pthread_mutex_lock(&_prelog_fd_lock);
       files = prelog_slist_prepend(files, ret);
+      pthread_mutex_unlock(&_prelog_fd_lock);
       prelog_log_old_new_event ("", old_fd, -1, open_txt, file, -1, FDOPEN_SCI);
       free (open_txt);
       free (old_fd);
       free (file);
     }
   }
+  pthread_mutex_unlock(&_prelog_fd_lock);
 
   errno = saved_errno;
   return ret;
@@ -579,8 +590,10 @@ void prelog_pipe(int ret, int pipefd[2], int flags, const char *interpretation)
       free (p0_txt);
       free (p1_txt);
     }
+    pthread_mutex_lock(&_prelog_fd_lock);
     fds = prelog_slist_prepend(fds, PRELOG_INT_TO_POINTER(pipefd[0]));
     fds = prelog_slist_prepend(fds, PRELOG_INT_TO_POINTER(pipefd[1]));
+    pthread_mutex_unlock(&_prelog_fd_lock);
   }
 }
 
@@ -629,8 +642,10 @@ int socketpair(int domain, int type, int protocol, int sv[2])
       free (p0_txt);
       free (open_txt);
     }
+    pthread_mutex_lock(&_prelog_fd_lock);
     fds = prelog_slist_prepend(fds, PRELOG_INT_TO_POINTER(sv[0]));
     fds = prelog_slist_prepend(fds, PRELOG_INT_TO_POINTER(sv[1]));
+    pthread_mutex_unlock(&_prelog_fd_lock);
   }
 
   errno = saved_errno;
@@ -702,7 +717,9 @@ DIR *opendir(const char *name)
     char *open_txt = malloc (sizeof (char) * len);
     if (open_txt) {
       snprintf (open_txt, len, "DIR %p: %s", ret, (ret? "e0":error_str));
+      pthread_mutex_lock(&_prelog_fd_lock);
       dirs = prelog_slist_prepend(dirs, ret);
+      pthread_mutex_unlock(&_prelog_fd_lock);
       prelog_log_event(open_txt, name, -1, OPENDIR_SCI);
       free (open_txt);
     }
@@ -718,6 +735,7 @@ DIR *fdopendir(int fd)
   DIR *ret = (*original_open)(fd);
   int saved_errno = errno;
 
+  pthread_mutex_lock(&_prelog_fd_lock);
   if(prelog_slist_find(fds, PRELOG_INT_TO_POINTER(fd))) {
     char *error_str = NULL;//, error[1024];
     if (errno) {
@@ -735,13 +753,16 @@ DIR *fdopendir(int fd)
       snprintf (old_fd, plen, "fd: %d", fd);
       snprintf (file, plen, "DIR %p", ret);
       snprintf (open_txt, len, "%s", (ret? "e0":error_str));
+      pthread_mutex_lock(&_prelog_fd_lock);
       dirs = prelog_slist_prepend(dirs, ret);
+      pthread_mutex_unlock(&_prelog_fd_lock);
       prelog_log_old_new_event ("", old_fd, -1, open_txt, file, -1, FDOPENDIR_SCI);
       free (open_txt);
       free (old_fd);
       free (file);
     }
   }
+  pthread_mutex_unlock(&_prelog_fd_lock);
 
   errno = saved_errno;
   return ret;
@@ -911,6 +932,7 @@ int close (int fd)
   int ret = (*original_close)(fd);
   int saved_errno = errno;
   
+  pthread_mutex_lock(&_prelog_fd_lock);
   if(prelog_slist_find(fds, PRELOG_INT_TO_POINTER(fd))) {
     char *error_str = NULL;//, error[1024];
     if (errno) {
@@ -930,6 +952,7 @@ int close (int fd)
 
     fds = prelog_slist_remove(fds, PRELOG_INT_TO_POINTER(fd));
   }
+  pthread_mutex_unlock(&_prelog_fd_lock);
   
   errno = saved_errno;
   return ret;
@@ -937,6 +960,7 @@ int close (int fd)
 
 void prelog_fclose (int ret, FILE *fp, const char *interpretation)
 {
+  pthread_mutex_lock(&_prelog_fd_lock);
   if(prelog_slist_find(files, fp)) {
     char *error_str = NULL;//, error[1024];
     if (errno) {
@@ -956,6 +980,7 @@ void prelog_fclose (int ret, FILE *fp, const char *interpretation)
 
     files = prelog_slist_remove(files, fp);
   }
+  pthread_mutex_unlock(&_prelog_fd_lock);
 }
 
 int fclose (FILE *fp)
@@ -983,6 +1008,7 @@ int closedir(DIR *dirp)
   typeof(closedir) *original_closedir = dlsym(RTLD_NEXT, "closedir");
   int ret = (*original_closedir)(dirp);
   int saved_errno = errno;
+  pthread_mutex_lock(&_prelog_fd_lock);
   if(prelog_slist_find(dirs, dirp)) {
     char *error_str = NULL;//, error[1024];
     if (errno) {
@@ -1002,6 +1028,7 @@ int closedir(DIR *dirp)
 
     dirs = prelog_slist_remove(dirs, dirp);
   }
+  pthread_mutex_unlock(&_prelog_fd_lock);
 
   errno = saved_errno;
   return ret;
@@ -1029,7 +1056,9 @@ int socket(int domain, int type, int protocol)
       prelog_log_event(open_txt, "socket", -1, SOCKET_SCI);
       free (open_txt);
     }
+    pthread_mutex_lock(&_prelog_fd_lock);
     fds = prelog_slist_prepend(fds, PRELOG_INT_TO_POINTER(ret));
+    pthread_mutex_unlock(&_prelog_fd_lock);
   }
 
   errno = saved_errno;

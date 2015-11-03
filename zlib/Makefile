@@ -18,13 +18,13 @@
 
 CC=gcc
 
-CFLAGS=-O3  -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN -Wl,--no-as-needed -ldl -D_GNU_SOURCE -fPIC
+CFLAGS=-O0 -g  -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN -Wl,--no-as-needed -ldl -D_GNU_SOURCE -fPIC
 #CFLAGS=-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7
 #CFLAGS=-g -DDEBUG
 #CFLAGS=-O3 -Wall -Wwrite-strings -Wpointer-arith -Wconversion \
 #           -Wstrict-prototypes -Wmissing-prototypes
 
-SFLAGS=-O3  -fPIC -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
+SFLAGS=-O0 -g  -fPIC -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
 LDFLAGS= 
 TEST_LDFLAGS=-L. libz.a
 LDSHARED=gcc
