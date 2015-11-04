@@ -1,4 +1,4 @@
-libpreload-logger (0.41) trusty; urgency=medium
+libpreload-logger (0.42) vivid; urgency=medium
 
   * Fixed a deadlock in file descriptor list mutex
 
