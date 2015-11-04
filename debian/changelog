@@ -1,3 +1,9 @@
+libpreload-logger (0.41) trusty; urgency=medium
+
+  * Fixed a deadlock in file descriptor list mutex
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Wed, 04 Nov 2015 11:40:21 +0000
+
 libpreload-logger (0.40) vivid; urgency=medium
 
   * Multithread safety (mutexes on shared data structures and gz file)

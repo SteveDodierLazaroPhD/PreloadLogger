@@ -539,9 +539,7 @@ FILE *fdopen(int fd, const char *mode)
       snprintf (old_fd, plen, "fd: %d", fd);
       snprintf (file, plen, "FILE %p", ret);
       snprintf (open_txt, len, "with flag %d, %s", flag, (ret? "e0":error_str));
-      pthread_mutex_lock(&_prelog_fd_lock);
       files = prelog_slist_prepend(files, ret);
-      pthread_mutex_unlock(&_prelog_fd_lock);
       prelog_log_old_new_event ("", old_fd, -1, open_txt, file, -1, FDOPEN_SCI);
       free (open_txt);
       free (old_fd);
@@ -753,9 +751,7 @@ DIR *fdopendir(int fd)
       snprintf (old_fd, plen, "fd: %d", fd);
       snprintf (file, plen, "DIR %p", ret);
       snprintf (open_txt, len, "%s", (ret? "e0":error_str));
-      pthread_mutex_lock(&_prelog_fd_lock);
       dirs = prelog_slist_prepend(dirs, ret);
-      pthread_mutex_unlock(&_prelog_fd_lock);
       prelog_log_old_new_event ("", old_fd, -1, open_txt, file, -1, FDOPENDIR_SCI);
       free (open_txt);
       free (old_fd);
