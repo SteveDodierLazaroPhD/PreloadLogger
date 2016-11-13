@@ -319,7 +319,7 @@ void prelog_dup (const int ret, const char *interpretation, int oldfd, int newfd
   pthread_mutex_lock(&_prelog_fd_lock);
   if(prelog_slist_find(fds, PRELOG_INT_TO_POINTER(oldfd))) {
     char *error_str = NULL;//, error[1024];
-    if (errno) {
+    if (errno) { //FIXME: errno is tampered with by pthread_mutex_lock, must be saved.
       //error_str = strerror_r (errno, error, 1024);
       error_str = malloc (26);
       snprintf (error_str, 26, "e%d", errno);
